@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+
+import 'package:percent_indicator/percent_indicator.dart';
 
 import 'package:mapgoal/src/settings/settings_view.dart';
 import 'package:mapgoal/src/data/goal.dart';
@@ -15,6 +19,7 @@ class GoalListView extends StatefulWidget {
 
 class _GoalListViewState extends State<GoalListView> {
   List<Goal> goallist = [
+    // TODO: This only works on startup if list is not empty, but will be overwritten soon anyway
     Goal(
         name: "Huhu",
         latStart: 0.0,
@@ -24,7 +29,11 @@ class _GoalListViewState extends State<GoalListView> {
         finished: false,
         totalDistance: 50.0)
   ];
-  late int curGoalIndex;
+  int curGoalIndex = 0;
+  final MapController _mapController = MapController();
+  List<Marker> markers = [];
+  List<Polyline> polylines = [];
+  double zoomLevel = 5.0;
 
   @override
   void initState() {
@@ -55,6 +64,16 @@ class _GoalListViewState extends State<GoalListView> {
         body: buildView());
   }
 
+  LatLng calculateUserPosition(Goal curGoal) {
+    double percentage = curGoal.curDistance / curGoal.totalDistance;
+    double userLat =
+        curGoal.latStart + (curGoal.latEnd - curGoal.latStart) * percentage;
+    double userLong =
+        curGoal.longStart + (curGoal.longEnd - curGoal.longStart) * percentage;
+
+    return LatLng(userLat, userLong);
+  }
+
   Widget buildView() {
     return Column(
       children: [
@@ -71,9 +90,34 @@ class _GoalListViewState extends State<GoalListView> {
               }).toList(),
               onChanged: (Goal? newValue) {
                 setState(() {
+                  markers.clear();
                   curGoalIndex =
                       goallist.indexWhere((goal) => goal.id == newValue!.id);
+                  markers.add(Marker(
+                      point: LatLng(goallist[curGoalIndex].latStart,
+                          goallist[curGoalIndex].longStart),
+                      child:
+                          const Icon(Icons.location_on, color: Colors.pink)));
+                  markers.add(Marker(
+                      point: LatLng(goallist[curGoalIndex].latEnd,
+                          goallist[curGoalIndex].longEnd),
+                      child:
+                          const Icon(Icons.location_on, color: Colors.blue)));
+                  markers.add(Marker(
+                      point: calculateUserPosition(goallist[curGoalIndex]),
+                      child: const Icon(Icons.person, color: Colors.black)));
+                  polylines.clear();
+                  polylines.add(Polyline(points: [
+                    LatLng(goallist[curGoalIndex].latEnd,
+                        goallist[curGoalIndex].longEnd),
+                    LatLng(goallist[curGoalIndex].latStart,
+                        goallist[curGoalIndex].longStart),
+                  ], color: Colors.blue, strokeWidth: 4.0));
                 });
+                _mapController.move(
+                    LatLng(goallist[curGoalIndex].latStart,
+                        goallist[curGoalIndex].longStart),
+                    zoomLevel);
               },
             ),
             FloatingActionButton(
@@ -90,15 +134,24 @@ class _GoalListViewState extends State<GoalListView> {
           ],
         ),
         Text(goallist[curGoalIndex].description),
-        Text("Map"),
+        Flexible(
+          flex: 10,
+          child: getMap(goallist[curGoalIndex]),
+        ),
+        LinearPercentIndicator(
+          lineHeight: 14.0,
+          percent: goallist[curGoalIndex].curDistance /
+              goallist[curGoalIndex].totalDistance,
+          backgroundColor: Colors.black,
+          progressColor: Colors.pink,
+        ),
         Row(
           children: [
             FilledButton(
                 onPressed: () {
                   showWorkoutPopup(context, null);
                 },
-                child: Text("huhu")),
-            // Text("Button"),
+                child: Text("KM adden")),
             Column(
               children: [
                 Text(
@@ -108,6 +161,24 @@ class _GoalListViewState extends State<GoalListView> {
             )
           ],
         )
+      ],
+    );
+  }
+
+  Widget getMap(Goal curGoal) {
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: LatLng(curGoal.latStart, curGoal.longStart),
+        initialZoom: zoomLevel,
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'dev.fleaflet.flutter_map.example',
+        ),
+        PolylineLayer(polylines: polylines),
+        MarkerLayer(markers: markers),
       ],
     );
   }
@@ -144,8 +215,16 @@ class _GoalListViewState extends State<GoalListView> {
             ),
             TextButton(
               onPressed: () {
-                addGoal(goalController.text, "Viva Canada", 0.0, 1.0, 50.5,
-                    50.0, false, 100.0, 50.0);
+                addGoal(
+                    goalController.text,
+                    descriptionController.text,
+                    51.435146,
+                    6.762692,
+                    52.520008,
+                    13.404954,
+                    false,
+                    473.27,
+                    250.0);
                 Navigator.of(context).pop();
               },
               child: const Text('Speichern'),
@@ -183,8 +262,9 @@ class _GoalListViewState extends State<GoalListView> {
             ),
             TextButton(
               onPressed: () {
-                addGoal("name", "Description", 0.0, 1.0, 50.5, 50.0, false,
-                    100.0, 50.0);
+                // TODO: Add workout
+                // addGoal("name", "Description", 51.435146, 6.762692, 52.520008,
+                //     13.404954, false, 100.0, 50.0);
                 Navigator.of(context).pop();
               },
               child: const Text('Speichern'),
@@ -265,14 +345,14 @@ class _GoalListViewState extends State<GoalListView> {
     });
   }
 
-  void editGoal(String newname, Goal Goal) {
-    Goal.name = newname;
-    DatabaseHelper.updateGoal(Goal);
+  // void editGoal(String newname, Goal Goal) {
+  //   Goal.name = newname;
+  //   DatabaseHelper.updateGoal(Goal);
 
-    setState(() {
-      goallist[goallist.indexWhere((item) => item.id == Goal.id)] = Goal;
-    });
-  }
+  //   setState(() {
+  //     goallist[goallist.indexWhere((item) => item.id == Goal.id)] = Goal;
+  //   });
+  // }
 
   // void deleteGoals(Set<Goal> goals) {
   //   setState(() {

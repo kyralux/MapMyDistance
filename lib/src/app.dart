@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mapgoal/src/views/goal_list_view.dart';
+import 'package:mapgoal/src/views/main_view.dart';
 
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
