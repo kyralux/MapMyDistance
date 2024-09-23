@@ -510,15 +510,6 @@ class _GoalListViewState extends State<GoalListView> {
     });
   }
 
-  // void editGoal(String newname, Goal Goal) {
-  //   Goal.name = newname;
-  //   DatabaseHelper.updateGoal(Goal);
-
-  //   setState(() {
-  //     goallist[goallist.indexWhere((item) => item.id == Goal.id)] = Goal;
-  //   });
-  // }
-
   void deleteGoal(Goal goal) {
     setState(() {
       goallist.removeAt(curGoalIndex);
@@ -527,42 +518,6 @@ class _GoalListViewState extends State<GoalListView> {
     });
   }
 
-  // void showPopup(BuildContext context, Goal? goal) {
-  //   TextEditingController goalController =
-  //       TextEditingController(text: goal?.name);
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: goal != null
-  //             ? const Text('Goal editieren')
-  //             : const Text('Neuen Goal hinzufügen'),
-  //         content: TextField(
-  //             controller: goalController,
-  //             decoration: const InputDecoration(hintText: "Goalname")),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //             child: const Text('Abbrechen'),
-  //           ),
-  //           // TextButton(
-  //           //   onPressed: () {
-  //           //     if (goal != null) {
-  //           //       editGoal(goalController.text, goal);
-  //           //     } else {
-  //           //       addMainGoal(goalController.text, "Desc");
-  //           //     }
-  //           //     Navigator.of(context).pop();
-  //           //   },
-  //           //   child: const Text('Speichern'),
-  //           // ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
   void showDeleteConfirmationPopUp(BuildContext context, Goal goal) {
     showDialog(
       context: context,
@@ -605,47 +560,4 @@ class _GoalListViewState extends State<GoalListView> {
   //     _editMode = !_editMode;
   //   });
   // }
-
-  Widget buildPresent() {
-    return Column(children: [
-      const Text("Current Goals"),
-      Column(
-        children: [
-          SizedBox(
-            height: 400,
-            child: Card.filled(
-              semanticContainer: true,
-              color: Colors.pink.shade100,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.0),
-              ),
-              margin: const EdgeInsets.all(42.0),
-              child: const Column(children: [Text("huhu"), Text("Ernährung!")]),
-            ),
-          ),
-          Card.filled(
-            color: Colors.pink.shade50,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30.0),
-            ),
-            margin: const EdgeInsets.all(16.0),
-            child: const Column(
-                children: [Text("Täglisch rausgehen"), Text("Sport")]),
-          )
-        ],
-      )
-    ]);
-  }
-
-  Widget buildPast() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text("Past Successes"),
-          Icon(Icons.star),
-        ],
-      ),
-    );
-  }
 }
