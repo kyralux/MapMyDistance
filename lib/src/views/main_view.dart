@@ -155,6 +155,17 @@ class _GoalListViewState extends State<GoalListView> {
                 color: Theme.of(context).colorScheme.onSecondary,
               ),
             ),
+            FloatingActionButton(
+              onPressed: () {
+                showDeleteConfirmationPopUp(context, goallist[curGoalIndex]);
+              },
+              heroTag: 'deleteButton',
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              child: Icon(
+                Icons.delete,
+                color: Theme.of(context).colorScheme.onSecondary,
+              ),
+            ),
           ],
         ),
         Text(goallist[curGoalIndex].description),
@@ -508,14 +519,14 @@ class _GoalListViewState extends State<GoalListView> {
   //   });
   // }
 
-  // void deleteGoals(Set<Goal> goals) {
-  //   setState(() {
-  //     for (Goal sk in goals.toList()) {
-  //       goallist.removeWhere((element) => element.id == sk.id);
-  //       DatabaseHelper.deleteGoal(sk.id!);
-  //     }
-  //   });
-  // }
+  void deleteGoal(Goal goal) {
+    setState(() {
+      goallist.removeAt(curGoalIndex);
+      curGoalIndex = 0;
+      DatabaseHelper.deleteGoal(goal.id!);
+    });
+  }
+
   // void showPopup(BuildContext context, Goal? goal) {
   //   TextEditingController goalController =
   //       TextEditingController(text: goal?.name);
@@ -552,33 +563,33 @@ class _GoalListViewState extends State<GoalListView> {
   //     },
   //   );
   // }
-  // void showDeleteConfirmationPopUp(BuildContext context, Set<Goal> selected) {
-  //   if (selected.isNotEmpty) {
-  //     showDialog(
-  //       context: context,
-  //       builder: (BuildContext context) {
-  //         return AlertDialog(
-  //           title: const Text("Löschen bestätigen"),
-  //           content: Text("Wirklich ${selected.length} Goals löschen?"),
-  //           actions: [
-  //             TextButton(
-  //               onPressed: () {
-  //                 Navigator.of(context).pop();
-  //               },
-  //               child: const Text('Löschen'),
-  //             ),
-  //             TextButton(
-  //               onPressed: () {
-  //                 Navigator.of(context).pop();
-  //               },
-  //               child: const Text('Abbrechen'),
-  //             ),
-  //           ],
-  //         );
-  //       },
-  //     );
-  //   }
-  // }
+  void showDeleteConfirmationPopUp(BuildContext context, Goal goal) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Löschen bestätigen"),
+          content: Text("Wirklich das Goal \"${goal.name}\" löschen?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                deleteGoal(goal);
+              },
+              child: const Text('Löschen'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Abbrechen'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // void toggleSelectItem(Goal item) {
   //   setState(() {
   //     if (selectedGoals.contains(item)) {
