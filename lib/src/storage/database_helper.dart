@@ -22,7 +22,7 @@ class DatabaseHelper {
           CREATE TABLE goals(id INTEGER PRIMARY KEY, name TEXT, 
             description TEXT, latStart REAL, longStart REAL,
             latEnd REAL, longEnd REAL, finished TEXT, 
-            totalDistance REAL, curDistance REAL)
+            totalDistance REAL, curDistance REAL);
         ''');
       },
       version: 1,

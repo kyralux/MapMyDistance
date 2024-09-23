@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'dart:math' show cos, sqrt, asin;
 
 import 'package:percent_indicator/percent_indicator.dart';
 
@@ -31,15 +32,16 @@ class _GoalListViewState extends State<GoalListView> {
   ];
   int curGoalIndex = 0;
   final MapController _mapController = MapController();
+  final MapController _mapControllerDialog = MapController();
   List<Marker> markers = [];
   List<Polyline> polylines = [];
   double zoomLevel = 5.0;
+  double calculatedDistance = 0.0;
 
   @override
   void initState() {
     super.initState();
     loadGoalList();
-    curGoalIndex = 0;
   }
 
   @override
@@ -74,6 +76,26 @@ class _GoalListViewState extends State<GoalListView> {
     return LatLng(userLat, userLong);
   }
 
+  double calculateDistanceGoal(Goal curGoal) {
+    var p = 0.017453292519943295;
+    var a = 0.5 -
+        cos((curGoal.latEnd - curGoal.latStart) * p) / 2 +
+        cos(curGoal.latStart * p) *
+            cos(curGoal.latEnd * p) *
+            (1 - cos((curGoal.longEnd - curGoal.longStart) * p)) /
+            2;
+    return 12742 * asin(sqrt(a));
+  }
+
+  double calculateDistance(lat1, lon1, lat2, lon2) {
+    var p = 0.017453292519943295;
+    var c = cos;
+    var a = 0.5 -
+        c((lat2 - lat1) * p) / 2 +
+        c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2;
+    return 12742 * asin(sqrt(a));
+  }
+
   Widget buildView() {
     return Column(
       children: [
@@ -93,19 +115,21 @@ class _GoalListViewState extends State<GoalListView> {
                   markers.clear();
                   curGoalIndex =
                       goallist.indexWhere((goal) => goal.id == newValue!.id);
-                  markers.add(Marker(
-                      point: LatLng(goallist[curGoalIndex].latStart,
-                          goallist[curGoalIndex].longStart),
-                      child:
-                          const Icon(Icons.location_on, color: Colors.pink)));
-                  markers.add(Marker(
-                      point: LatLng(goallist[curGoalIndex].latEnd,
-                          goallist[curGoalIndex].longEnd),
-                      child:
-                          const Icon(Icons.location_on, color: Colors.blue)));
-                  markers.add(Marker(
-                      point: calculateUserPosition(goallist[curGoalIndex]),
-                      child: const Icon(Icons.person, color: Colors.black)));
+                  markers.addAll([
+                    Marker(
+                        point: LatLng(goallist[curGoalIndex].latStart,
+                            goallist[curGoalIndex].longStart),
+                        child:
+                            const Icon(Icons.location_on, color: Colors.pink)),
+                    Marker(
+                        point: LatLng(goallist[curGoalIndex].latEnd,
+                            goallist[curGoalIndex].longEnd),
+                        child:
+                            const Icon(Icons.location_on, color: Colors.blue)),
+                    Marker(
+                        point: calculateUserPosition(goallist[curGoalIndex]),
+                        child: const Icon(Icons.person, color: Colors.black))
+                  ]);
                   polylines.clear();
                   polylines.add(Polyline(points: [
                     LatLng(goallist[curGoalIndex].latEnd,
@@ -151,12 +175,13 @@ class _GoalListViewState extends State<GoalListView> {
                 onPressed: () {
                   showWorkoutPopup(context, null);
                 },
-                child: Text("KM adden")),
+                child: const Text("KM adden")),
             Column(
               children: [
                 Text(
-                    "Remaining Distance: ${goallist[curGoalIndex].totalDistance - goallist[curGoalIndex].curDistance}"),
-                Text("Schon geschafft: ${goallist[curGoalIndex].curDistance}")
+                    "Remaining: ${double.parse((goallist[curGoalIndex].totalDistance - goallist[curGoalIndex].curDistance).toStringAsFixed(2))} km"),
+                Text(
+                    "Schon geschafft: ${goallist[curGoalIndex].curDistance} km")
               ],
             )
           ],
@@ -184,28 +209,168 @@ class _GoalListViewState extends State<GoalListView> {
   }
 
   void showPopup(BuildContext context, Goal? goal) {
+    LatLng? selectedLocationStart;
+    LatLng? selectedLocationEnd;
     TextEditingController goalController =
         TextEditingController(text: goal?.name);
+    TextEditingController startPositionController =
+        TextEditingController(text: selectedLocationStart.toString());
+    TextEditingController endPositionController =
+        TextEditingController(text: selectedLocationEnd.toString());
     TextEditingController descriptionController =
         TextEditingController(text: goal?.description);
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Neues Goal hinzufügen'),
-          content: Column(
-            children: [
-              TextField(
-                  controller: goalController,
-                  decoration: const InputDecoration(hintText: "Name")),
-              TextField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(hintText: "Beschreibung")),
-              Text("Startpunkt"),
-              Text("Endpunkt"),
-              Text("berechnete Distanz zwischen Start- und Endpunkt: ${8} ")
+        return StatefulBuilder(builder: (context, StateSetter setState) {
+          return AlertDialog(
+            title: const Text('Neues Goal hinzufügen'),
+            content: Column(
+              children: [
+                TextField(
+                    controller: goalController,
+                    decoration: const InputDecoration(hintText: "Name")),
+                TextField(
+                    controller: descriptionController,
+                    decoration:
+                        const InputDecoration(hintText: "Beschreibung")),
+                Row(children: [
+                  Expanded(
+                      child: TextField(
+                          controller: startPositionController,
+                          decoration: const InputDecoration(
+                              hintText: "Startposition"))),
+                  FilledButton(
+                    onPressed: () async {
+                      selectedLocationStart = await showLocationPicker(
+                          context, "Startpunkt setzen");
+                      if (selectedLocationStart != null) {
+                        startPositionController.text =
+                            selectedLocationStart.toString();
+                      }
+                      if (selectedLocationEnd != null) {
+                        setState(() {
+                          calculatedDistance = calculateDistance(
+                              selectedLocationStart?.latitude,
+                              selectedLocationStart?.longitude,
+                              selectedLocationEnd?.latitude,
+                              selectedLocationEnd?.longitude);
+                        });
+                      }
+                    },
+                    child: Icon(
+                      Icons.gps_fixed,
+                      color: Theme.of(context).colorScheme.onSecondary,
+                    ),
+                  )
+                ]),
+                Row(children: [
+                  Expanded(
+                      child: TextField(
+                          controller: endPositionController,
+                          decoration:
+                              const InputDecoration(hintText: "Endposition"))),
+                  FilledButton(
+                    onPressed: () async {
+                      selectedLocationEnd = await showLocationPicker(
+                          context, "Startpunkt setzen");
+                      if (selectedLocationEnd != null) {
+                        endPositionController.text =
+                            selectedLocationEnd.toString();
+                        if (selectedLocationStart != null) {
+                          setState(() {
+                            calculatedDistance = calculateDistance(
+                                selectedLocationStart?.latitude,
+                                selectedLocationStart?.longitude,
+                                selectedLocationEnd?.latitude,
+                                selectedLocationEnd?.longitude);
+                          });
+                        }
+                      }
+                    },
+                    child: Icon(
+                      Icons.gps_fixed,
+                      color: Theme.of(context).colorScheme.onSecondary,
+                    ),
+                  ),
+                ]),
+                Text(
+                  "Berechnete Distanz zwischen Start- und Endpunkt: ${double.parse((calculatedDistance).toStringAsFixed(2))}",
+                ),
+              ], // probleme: start und end sind nicht unbedingt in der richtigen reihenfolge besettz. ich muss das quasi berechnen sobald beide gesetzt sind. but how?
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Abbrechen'),
+              ),
+              TextButton(
+                onPressed: () {
+                  if (selectedLocationEnd != null &&
+                      selectedLocationStart != null) {
+                    addGoal(
+                        goalController.text,
+                        descriptionController.text,
+                        selectedLocationStart!.latitude,
+                        selectedLocationStart!.longitude,
+                        selectedLocationEnd!.latitude,
+                        selectedLocationEnd!.longitude,
+                        false,
+                        calculatedDistance,
+                        0.0);
+                  }
+                  calculatedDistance = 0;
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Speichern'),
+              ),
             ],
-          ),
+          );
+        });
+      },
+    );
+  }
+
+  Future<LatLng?> showLocationPicker(
+    BuildContext context,
+    String title, //""
+  ) {
+    return showDialog<LatLng?>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Container(
+              width: double.maxFinite,
+              height: 400,
+              child: Stack(
+                children: [
+                  FlutterMap(
+                    mapController: _mapControllerDialog,
+                    options: MapOptions(
+                      initialCenter: const LatLng(51.435146, 6.762692),
+                      initialZoom: zoomLevel,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName:
+                            'dev.fleaflet.flutter_map.example',
+                      )
+                    ],
+                  ),
+                  const Center(
+                    child: Icon(
+                      Icons.location_pin,
+                      size: 50,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+              )),
           actions: [
             TextButton(
               onPressed: () {
@@ -215,17 +380,7 @@ class _GoalListViewState extends State<GoalListView> {
             ),
             TextButton(
               onPressed: () {
-                addGoal(
-                    goalController.text,
-                    descriptionController.text,
-                    51.435146,
-                    6.762692,
-                    52.520008,
-                    13.404954,
-                    false,
-                    473.27,
-                    250.0);
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(_mapControllerDialog.camera.center);
               },
               child: const Text('Speichern'),
             ),
@@ -238,21 +393,14 @@ class _GoalListViewState extends State<GoalListView> {
   void showWorkoutPopup(BuildContext context, Goal? goal) {
     TextEditingController distanceController =
         TextEditingController(text: goal?.name);
-    TextEditingController typeController =
-        TextEditingController(text: goal?.name);
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Neues Workout hinzufügen'),
-          content: Column(children: [
-            TextField(
-                controller: distanceController,
-                decoration: const InputDecoration(hintText: "Distance")),
-            TextField(
-                controller: typeController,
-                decoration: const InputDecoration(hintText: "Type"))
-          ]),
+          title: const Text('Distanz zurückgelegt'),
+          content: TextField(
+              controller: distanceController,
+              decoration: const InputDecoration(hintText: "km")),
           actions: [
             TextButton(
               onPressed: () {
@@ -262,9 +410,15 @@ class _GoalListViewState extends State<GoalListView> {
             ),
             TextButton(
               onPressed: () {
-                // TODO: Add workout
-                // addGoal("name", "Description", 51.435146, 6.762692, 52.520008,
-                //     13.404954, false, 100.0, 50.0);
+                setState(() {
+                  goallist[curGoalIndex].curDistance +=
+                      double.parse(distanceController.text);
+                  markers.removeLast();
+                  markers.add(Marker(
+                      point: calculateUserPosition(goallist[curGoalIndex]),
+                      child: const Icon(Icons.person, color: Colors.black)));
+                });
+
                 Navigator.of(context).pop();
               },
               child: const Text('Speichern'),

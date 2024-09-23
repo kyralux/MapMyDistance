@@ -1,30 +1,27 @@
-class Workout {
-  Workout({
-    this.id,
-    required this.distance,
-    required this.goalId,
-    DateTime? timestamp,
-    this.activityType = "",
-  }) : timestamp = timestamp ?? DateTime.now();
+// class Workout {
+//   Workout({
+//     this.id,
+//     required this.distance,
+//     required this.goalId,
+//     this.activityType = "",
+//   });
 
-  int? id;
-  late double distance;
-  DateTime timestamp;
-  int? goalId;
-  String activityType;
+//   int? id;
+//   late double distance;
+//   int? goalId;
+//   String activityType;
 
-  Map<String, Object?> toMap() {
-    return {
-      'id': id,
-      'distance': distance,
-      'timestamp': timestamp,
-      'goalId': goalId,
-      'activityType': activityType,
-    };
-  }
+//   Map<String, Object?> toMap() {
+//     return {
+//       'id': id,
+//       'distance': distance,
+//       'goalId': goalId,
+//       'activityType': activityType,
+//     };
+//   }
 
-  // @override
-  // String toString() {
-  //   return 'Goal{id: $id, name: $name, description: $description}';
-  // }
-}
+//   // @override
+//   // String toString() {
+//   //   return 'Goal{id: $id, name: $name, description: $description}';
+//   // }
+// }
