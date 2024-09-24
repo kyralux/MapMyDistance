@@ -19,17 +19,7 @@ class GoalListView extends StatefulWidget {
 }
 
 class _GoalListViewState extends State<GoalListView> {
-  List<Goal> goallist = [
-    // TODO: This only works on startup if list is not empty, but will be overwritten soon anyway
-    Goal(
-        name: "Huhu",
-        latStart: 0.0,
-        longStart: 1.0,
-        latEnd: 5.5,
-        longEnd: 50.5,
-        finished: false,
-        totalDistance: 50.0)
-  ];
+  List<Goal> goallist = [];
   int curGoalIndex = 0;
   final MapController _mapController = MapController();
   final MapController _mapControllerDialog = MapController();
@@ -40,8 +30,8 @@ class _GoalListViewState extends State<GoalListView> {
 
   @override
   void initState() {
-    super.initState();
     loadGoalList();
+    super.initState();
   }
 
   @override
@@ -97,108 +87,143 @@ class _GoalListViewState extends State<GoalListView> {
   }
 
   Widget buildView() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            DropdownButton(
-              value: goallist[curGoalIndex],
-              icon: const Icon(Icons.keyboard_arrow_down),
-              items: goallist.map((Goal item) {
-                return DropdownMenuItem(
-                  value: item,
-                  child: Text(item.name),
-                );
-              }).toList(),
-              onChanged: (Goal? newValue) {
-                setState(() {
-                  markers.clear();
-                  curGoalIndex =
-                      goallist.indexWhere((goal) => goal.id == newValue!.id);
-                  markers.addAll([
-                    Marker(
-                        point: LatLng(goallist[curGoalIndex].latStart,
-                            goallist[curGoalIndex].longStart),
-                        child:
-                            const Icon(Icons.location_on, color: Colors.pink)),
-                    Marker(
-                        point: LatLng(goallist[curGoalIndex].latEnd,
-                            goallist[curGoalIndex].longEnd),
-                        child:
-                            const Icon(Icons.location_on, color: Colors.blue)),
-                    Marker(
-                        point: calculateUserPosition(goallist[curGoalIndex]),
-                        child: const Icon(Icons.person, color: Colors.black))
-                  ]);
-                  polylines.clear();
-                  polylines.add(Polyline(points: [
-                    LatLng(goallist[curGoalIndex].latEnd,
-                        goallist[curGoalIndex].longEnd),
-                    LatLng(goallist[curGoalIndex].latStart,
-                        goallist[curGoalIndex].longStart),
-                  ], color: Colors.blue, strokeWidth: 4.0));
-                });
-                _mapController.move(
-                    LatLng(goallist[curGoalIndex].latStart,
-                        goallist[curGoalIndex].longStart),
-                    zoomLevel);
-              },
-            ),
-            FloatingActionButton(
-              onPressed: () {
-                showPopup(context, null);
-              },
-              heroTag: 'addButton',
-              backgroundColor: Theme.of(context).colorScheme.secondary,
-              child: Icon(
-                Icons.add,
-                color: Theme.of(context).colorScheme.onSecondary,
+    return goallist.isNotEmpty
+        ? Column(
+            children: [
+              Expanded(
+                  child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  goallist.isNotEmpty
+                      ? DropdownButton(
+                          value: goallist[curGoalIndex],
+                          icon: const Icon(Icons.keyboard_arrow_down),
+                          items: goallist.map((Goal item) {
+                            return DropdownMenuItem(
+                              value: item,
+                              child: Text(item.name),
+                            );
+                          }).toList(),
+                          onChanged: (Goal? newGoal) {
+                            setState(() {
+                              updateMap(newGoal);
+                            });
+                            _mapController.move(
+                                LatLng(goallist[curGoalIndex].latStart,
+                                    goallist[curGoalIndex].longStart),
+                                zoomLevel);
+                          },
+                        )
+                      : const Text('Keine Goals bisher'),
+                  FloatingActionButton(
+                    onPressed: () {
+                      showPopup(context, null);
+                    },
+                    heroTag: 'addButton',
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    child: Icon(
+                      Icons.add,
+                      color: Theme.of(context).colorScheme.onSecondary,
+                    ),
+                  ),
+                  FloatingActionButton(
+                    onPressed: () {
+                      showDeleteConfirmationPopUp(
+                          context, goallist[curGoalIndex]);
+                    },
+                    heroTag: 'deleteButton',
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    child: Icon(
+                      Icons.delete,
+                      color: Theme.of(context).colorScheme.onSecondary,
+                    ),
+                  ),
+                ],
+              )),
+              goallist[curGoalIndex].description.isNotEmpty
+                  ? Text(goallist[curGoalIndex].description)
+                  : Container(),
+              Flexible(
+                flex: 10,
+                child: getMap(goallist[curGoalIndex]),
               ),
-            ),
-            FloatingActionButton(
-              onPressed: () {
-                showDeleteConfirmationPopUp(context, goallist[curGoalIndex]);
-              },
-              heroTag: 'deleteButton',
-              backgroundColor: Theme.of(context).colorScheme.secondary,
-              child: Icon(
-                Icons.delete,
-                color: Theme.of(context).colorScheme.onSecondary,
+              LinearPercentIndicator(
+                lineHeight: 14.0,
+                percent: goallist[curGoalIndex].curDistance /
+                    goallist[curGoalIndex].totalDistance,
+                backgroundColor: Colors.black,
+                progressColor: Colors.pink,
               ),
-            ),
-          ],
-        ),
-        Text(goallist[curGoalIndex].description),
-        Flexible(
-          flex: 10,
-          child: getMap(goallist[curGoalIndex]),
-        ),
-        LinearPercentIndicator(
-          lineHeight: 14.0,
-          percent: goallist[curGoalIndex].curDistance /
-              goallist[curGoalIndex].totalDistance,
-          backgroundColor: Colors.black,
-          progressColor: Colors.pink,
-        ),
-        Row(
-          children: [
-            FilledButton(
+              Row(
+                children: [
+                  FilledButton(
+                      onPressed: () {
+                        showWorkoutPopup(context, null);
+                      },
+                      child: const Text("KM adden")),
+                  Column(
+                    children: [
+                      Text(
+                          "Remaining: ${double.parse((goallist[curGoalIndex].totalDistance - goallist[curGoalIndex].curDistance).toStringAsFixed(2))} km"),
+                      Text(
+                          "Schon geschafft: ${goallist[curGoalIndex].curDistance} km")
+                    ],
+                  )
+                ],
+              )
+            ],
+          )
+        : Row(
+            children: [
+              const Text('Keine Goals bisher'),
+              FloatingActionButton(
                 onPressed: () {
-                  showWorkoutPopup(context, null);
+                  showPopup(context, null);
                 },
-                child: const Text("KM adden")),
-            Column(
-              children: [
-                Text(
-                    "Remaining: ${double.parse((goallist[curGoalIndex].totalDistance - goallist[curGoalIndex].curDistance).toStringAsFixed(2))} km"),
-                Text(
-                    "Schon geschafft: ${goallist[curGoalIndex].curDistance} km")
-              ],
-            )
-          ],
-        )
-      ],
-    );
+                heroTag: 'addButton',
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                child: Icon(
+                  Icons.add,
+                  color: Theme.of(context).colorScheme.onSecondary,
+                ),
+              ),
+              FloatingActionButton(
+                onPressed: () {
+                  showDeleteConfirmationPopUp(context, goallist[curGoalIndex]);
+                },
+                heroTag: 'deleteButton',
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                child: Icon(
+                  Icons.delete,
+                  color: Theme.of(context).colorScheme.onSecondary,
+                ),
+              ),
+            ],
+          );
+  }
+
+  void updateMap(Goal? newValue) {
+    markers.clear();
+    curGoalIndex = goallist.indexWhere((goal) => goal.id == newValue!.id);
+    markers.addAll([
+      Marker(
+          point: LatLng(goallist[curGoalIndex].latStart,
+              goallist[curGoalIndex].longStart),
+          child: const Icon(Icons.location_on, color: Colors.pink)),
+      Marker(
+          point: LatLng(
+              goallist[curGoalIndex].latEnd, goallist[curGoalIndex].longEnd),
+          child: const Icon(Icons.location_on, color: Colors.blue)),
+      Marker(
+          point: calculateUserPosition(goallist[curGoalIndex]),
+          child: const Icon(Icons.person, color: Colors.black))
+    ]);
+    polylines.clear();
+    polylines.add(Polyline(points: [
+      LatLng(goallist[curGoalIndex].latEnd, goallist[curGoalIndex].longEnd),
+      LatLng(goallist[curGoalIndex].latStart, goallist[curGoalIndex].longStart),
+    ], color: Colors.blue, strokeWidth: 4.0));
   }
 
   Widget getMap(Goal curGoal) {
@@ -306,7 +331,7 @@ class _GoalListViewState extends State<GoalListView> {
                   ),
                 ]),
                 Text(
-                  "Berechnete Distanz zwischen Start- und Endpunkt: ${double.parse((calculatedDistance).toStringAsFixed(2))}",
+                  "Berechnete Distanz zwischen Start- und Endpunkt: ${double.parse((calculatedDistance).toStringAsFixed(2))} km",
                 ),
               ], // probleme: start und end sind nicht unbedingt in der richtigen reihenfolge besettz. ich muss das quasi berechnen sobald beide gesetzt sind. but how?
             ),
@@ -346,14 +371,14 @@ class _GoalListViewState extends State<GoalListView> {
 
   Future<LatLng?> showLocationPicker(
     BuildContext context,
-    String title, //""
+    String title,
   ) {
     return showDialog<LatLng?>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(title),
-          content: Container(
+          content: SizedBox(
               width: double.maxFinite,
               height: 400,
               child: Stack(
@@ -363,6 +388,8 @@ class _GoalListViewState extends State<GoalListView> {
                     options: MapOptions(
                       initialCenter: const LatLng(51.435146, 6.762692),
                       initialZoom: zoomLevel,
+                      interactionOptions:
+                          InteractionOptions(rotationThreshold: 50),
                     ),
                     children: [
                       TileLayer(
@@ -474,12 +501,22 @@ class _GoalListViewState extends State<GoalListView> {
         });
   }
 
-  void loadGoalList() {
-    DatabaseHelper.getGoals().then((v) => {
-          setState(() {
-            goallist = v;
-          }),
-        });
+  Future<void> loadGoalList() async {
+    // DatabaseHelper.getGoals().then((v) => {
+    //       setState(() {
+    //         if (v.isNotEmpty) {
+    //           goallist = v;
+    //         }
+    //       }),
+    //     });
+    List<Goal> v = await DatabaseHelper.getGoals();
+
+    setState(() {
+      if (v.isNotEmpty) {
+        goallist = v;
+        updateMap(goallist[curGoalIndex]);
+      }
+    });
   }
 
   void addGoal(
@@ -508,12 +545,14 @@ class _GoalListViewState extends State<GoalListView> {
     setState(() {
       goallist.add(goal);
     });
+    updateMap(goal);
   }
 
   void deleteGoal(Goal goal) {
     setState(() {
       goallist.removeAt(curGoalIndex);
       curGoalIndex = 0;
+      if (goallist.isNotEmpty) updateMap(goallist[curGoalIndex]);
       DatabaseHelper.deleteGoal(goal.id!);
     });
   }
@@ -561,3 +600,17 @@ class _GoalListViewState extends State<GoalListView> {
   //   });
   // }
 }
+
+// slower
+// map usability improvement: erst später drehen,
+// restore button um ma wieder richtig auszurichten? oder rotaten komplett entfernen?
+// anderes map dingens probieren?
+// schön machen
+//
+
+// ?
+// in textcontrolling field nicht latlng() printen
+// wenn man km hinzufügt ist es nicht permanent
+// weite wege, die schräg sind da läuft unser user icon vom weg runter
+// make sure that everything works without  data
+// center map on user icon
