@@ -253,6 +253,7 @@ class _GoalListViewState extends State<GoalListView> {
         TextEditingController(text: selectedLocationStart.toString());
     TextEditingController endPositionController =
         TextEditingController(text: selectedLocationEnd.toString());
+    //'${selectedLocationEnd.latitude}, ${selectedLocationEnd.longitude}');
     TextEditingController descriptionController =
         TextEditingController(text: goal?.description);
     showDialog(
@@ -449,9 +450,7 @@ class _GoalListViewState extends State<GoalListView> {
             TextButton(
               onPressed: () {
                 setState(() {
-                  goallist[curGoalIndex].curDistance +=
-                      double.parse(distanceController.text);
-                  updateUserMarker();
+                  addWorkout(double.parse(distanceController.text));
                 });
                 Navigator.of(context).pop();
               },
@@ -461,6 +460,12 @@ class _GoalListViewState extends State<GoalListView> {
         );
       },
     );
+  }
+
+  void addWorkout(double distance) {
+    goallist[curGoalIndex].curDistance += distance;
+    updateUserMarker();
+    DatabaseHelper.editGoal(goallist[curGoalIndex]);
   }
 
   void updateUserMarker() {
@@ -568,11 +573,10 @@ class _GoalListViewState extends State<GoalListView> {
 // restore button um ma wieder richtig auszurichten? oder rotaten komplett entfernen?
 // anderes map dingens probieren?
 // schön machen
-//
 
 // ?
 // in textcontrolling field nicht latlng() printen
-// wenn man km hinzufügt ist es nicht permanent
 // weite wege, die schräg sind da läuft unser user icon vom weg runter
-// make sure that everything works without  data
 // center map on user icon
+
+// now:   

@@ -42,6 +42,15 @@ class DatabaseHelper {
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  static Future<void> editGoal(Goal goal) async {
+    final Database db = await getDBConnector();
+
+    await db.update('goals', goal.toMap(),
+        where: 'id=?',
+        whereArgs: [goal.id],
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
   static Future<Goal> getGoal(int id) async {
     final Database db = await getDBConnector();
     List<Map<String, Object?>> goalMap =
