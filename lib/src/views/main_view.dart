@@ -451,12 +451,8 @@ class _GoalListViewState extends State<GoalListView> {
                 setState(() {
                   goallist[curGoalIndex].curDistance +=
                       double.parse(distanceController.text);
-                  markers.removeLast();
-                  markers.add(Marker(
-                      point: calculateUserPosition(goallist[curGoalIndex]),
-                      child: const Icon(Icons.person, color: Colors.black)));
+                  updateUserMarker();
                 });
-
                 Navigator.of(context).pop();
               },
               child: const Text('Speichern'),
@@ -467,48 +463,14 @@ class _GoalListViewState extends State<GoalListView> {
     );
   }
 
-  Widget buildGoalsBacklog() {
-    return ReorderableListView.builder(
-        restorationId: 'GoalListView',
-        itemCount: goallist.length,
-        itemBuilder: (BuildContext context, int index) {
-          var item = goallist[index];
-          return Column(
-            key: Key('$index'),
-            children: <Widget>[
-              ListTile(
-                key: ObjectKey(item),
-                title: Text(item.name),
-              ),
-              if (index != goallist.length - 1)
-                const Divider(
-                  indent: 70,
-                  endIndent: 30,
-                )
-              else
-                const Padding(
-                  padding: EdgeInsets.all(32.0),
-                )
-            ],
-          );
-        },
-        onReorder: (int oldIndex, int newIndex) {
-          if (oldIndex < newIndex) {
-            newIndex -= 1;
-          }
-          final item = goallist.removeAt(oldIndex);
-          goallist.insert(newIndex, item);
-        });
+  void updateUserMarker() {
+    markers.removeLast();
+    markers.add(Marker(
+        point: calculateUserPosition(goallist[curGoalIndex]),
+        child: const Icon(Icons.person, color: Colors.black)));
   }
 
   Future<void> loadGoalList() async {
-    // DatabaseHelper.getGoals().then((v) => {
-    //       setState(() {
-    //         if (v.isNotEmpty) {
-    //           goallist = v;
-    //         }
-    //       }),
-    //     });
     List<Goal> v = await DatabaseHelper.getGoals();
 
     setState(() {
