@@ -5,7 +5,6 @@ import 'dart:math' show cos, sqrt, asin;
 
 import 'package:percent_indicator/percent_indicator.dart';
 
-import 'package:mapgoal/src/settings/settings_view.dart';
 import 'package:mapgoal/src/data/goal.dart';
 
 import 'package:mapgoal/src/storage/database_helper.dart';
@@ -37,23 +36,27 @@ class _GoalListViewState extends State<GoalListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'Goals',
-            style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+      body: buildView(),
+      floatingActionButton:
+          goallist.isNotEmpty ? _buildActionButton(context) : null,
+    );
+  }
+
+  Widget _buildActionButton(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        FloatingActionButton(
+          onPressed: () => showWorkoutPopup(context, null),
+          heroTag: 'addWorkoutButton',
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+          child: Icon(
+            Icons.add,
+            color: Theme.of(context).colorScheme.onSecondary,
           ),
-          backgroundColor: Theme.of(context).primaryColor,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.settings),
-              color: Theme.of(context).colorScheme.onPrimary,
-              onPressed: () {
-                Navigator.restorablePushNamed(context, SettingsView.routeName);
-              },
-            ),
-          ],
         ),
-        body: buildView());
+      ],
+    );
   }
 
   LatLng calculateUserPosition(Goal curGoal) {
@@ -86,101 +89,65 @@ class _GoalListViewState extends State<GoalListView> {
     return 12742 * asin(sqrt(a));
   }
 
-  Widget buildView() {
-    return goallist.isNotEmpty
-        ? Column(
-            children: [
-              Expanded(
-                  child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  goallist.isNotEmpty
-                      ? DropdownButton(
-                          value: goallist[curGoalIndex],
-                          icon: const Icon(Icons.keyboard_arrow_down),
-                          items: goallist.map((Goal item) {
-                            return DropdownMenuItem(
-                              value: item,
-                              child: Text(item.name),
-                            );
-                          }).toList(),
-                          onChanged: (Goal? newGoal) {
-                            setState(() {
-                              updateMap(newGoal);
-                            });
-                            _mapController.move(
-                                LatLng(goallist[curGoalIndex].latStart,
-                                    goallist[curGoalIndex].longStart),
-                                zoomLevel);
-                          },
-                        )
-                      : const Text('Keine Goals bisher'),
-                  FloatingActionButton(
-                    onPressed: () {
-                      showPopup(context, null);
-                    },
-                    heroTag: 'addButton',
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
-                    child: Icon(
-                      Icons.add,
-                      color: Theme.of(context).colorScheme.onSecondary,
-                    ),
-                  ),
-                  FloatingActionButton(
-                    onPressed: () {
-                      showDeleteConfirmationPopUp(
-                          context, goallist[curGoalIndex]);
-                    },
-                    heroTag: 'deleteButton',
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
-                    child: Icon(
-                      Icons.delete,
-                      color: Theme.of(context).colorScheme.onSecondary,
-                    ),
-                  ),
-                ],
-              )),
-              goallist[curGoalIndex].description.isNotEmpty
-                  ? Text(goallist[curGoalIndex].description)
-                  : Container(),
-              Flexible(
-                flex: 10,
-                child: getMap(goallist[curGoalIndex]),
+  Widget getProgressBar() {
+    return Stack(
+      children: [
+        LinearPercentIndicator(
+          padding: const EdgeInsets.all(0),
+          lineHeight: 30.0,
+          percent: goallist[curGoalIndex].curDistance /
+              goallist[curGoalIndex].totalDistance,
+          backgroundColor: Colors.white,
+          progressColor: Colors.transparent,
+          animation: true,
+          center: Text(
+            '${(goallist[curGoalIndex].curDistance / goallist[curGoalIndex].totalDistance * 100).toStringAsFixed(1)}%',
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        Positioned.fill(
+          child: FractionallySizedBox(
+            widthFactor: goallist[curGoalIndex].curDistance /
+                goallist[curGoalIndex].totalDistance,
+            alignment: Alignment.centerLeft,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFFf9bb00),
+                    Color(0xFFFF8C00),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
               ),
-              LinearPercentIndicator(
-                lineHeight: 14.0,
-                percent: goallist[curGoalIndex].curDistance /
-                    goallist[curGoalIndex].totalDistance,
-                backgroundColor: Colors.black,
-                progressColor: Colors.pink,
-              ),
-              Row(
-                children: [
-                  FilledButton(
-                      onPressed: () {
-                        showWorkoutPopup(context, null);
-                      },
-                      child: const Text("KM adden")),
-                  Column(
-                    children: [
-                      Text(
-                          "Remaining: ${double.parse((goallist[curGoalIndex].totalDistance - goallist[curGoalIndex].curDistance).toStringAsFixed(2))} km"),
-                      Text(
-                          "Schon geschafft: ${goallist[curGoalIndex].curDistance} km")
-                    ],
-                  )
-                ],
-              )
-            ],
-          )
-        : Row(
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyView(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'Keine Goals bisher',
+            style: TextStyle(fontSize: 18.0),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Keine Goals bisher'),
               FloatingActionButton(
-                onPressed: () {
-                  showPopup(context, null);
-                },
+                onPressed: () => showPopup(context, null),
                 heroTag: 'addButton',
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 child: Icon(
@@ -188,24 +155,100 @@ class _GoalListViewState extends State<GoalListView> {
                   color: Theme.of(context).colorScheme.onSecondary,
                 ),
               ),
-              FloatingActionButton(
-                onPressed: () {
-                  showDeleteConfirmationPopUp(context, goallist[curGoalIndex]);
-                },
-                heroTag: 'deleteButton',
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-                child: Icon(
-                  Icons.delete,
-                  color: Theme.of(context).colorScheme.onSecondary,
-                ),
-              ),
             ],
-          );
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildView() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.secondary
+          ],
+        ),
+      ),
+      child: goallist.isNotEmpty
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 50),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: getDropDownRow(),
+                ),
+                _buildGoalDescription(context),
+                _buildGoalCard(context),
+                const SizedBox(
+                  height: 50,
+                )
+              ],
+            )
+          : _buildEmptyView(context),
+    );
+  }
+
+  Widget _buildGoalDescription(BuildContext context) {
+    if (goallist[curGoalIndex].description.isNotEmpty) {
+      return Container(
+          alignment: Alignment.center,
+          child: Text(
+            goallist[curGoalIndex].description,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ));
+    }
+
+    return const SizedBox.shrink(); // Return an empty widget if no description
+  }
+
+  Widget _buildGoalCard(BuildContext context) {
+    return Flexible(
+      flex: 10,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Card(
+          shape: RoundedRectangleBorder(
+            side: BorderSide(
+              color: Theme.of(context).colorScheme.primary,
+              width: 2.0,
+            ),
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          elevation: 5,
+          child: ClipRRect(
+              borderRadius: BorderRadius.circular(16.0),
+              child: Flexible(
+                flex: 10,
+                child: Column(
+                  children: [
+                    getMap(goallist[curGoalIndex]),
+                    Padding(
+                      padding: const EdgeInsets.all(0),
+                      child: getProgressBar(),
+                    ),
+                    Text(
+                      "${goallist[curGoalIndex].curDistance} / ${double.parse((goallist[curGoalIndex].totalDistance - goallist[curGoalIndex].curDistance).toStringAsFixed(2))} km",
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    )
+                  ],
+                ),
+              )),
+        ),
+      ),
+    );
   }
 
   void updateMap(Goal? newValue) {
     markers.clear();
     curGoalIndex = goallist.indexWhere((goal) => goal.id == newValue!.id);
+    LatLng coordinates = calculateUserPosition(goallist[curGoalIndex]);
     markers.addAll([
       Marker(
           point: LatLng(goallist[curGoalIndex].latStart,
@@ -216,7 +259,7 @@ class _GoalListViewState extends State<GoalListView> {
               goallist[curGoalIndex].latEnd, goallist[curGoalIndex].longEnd),
           child: const Icon(Icons.location_on, color: Colors.blue)),
       Marker(
-          point: calculateUserPosition(goallist[curGoalIndex]),
+          point: coordinates,
           child: const Icon(Icons.person, color: Colors.black))
     ]);
     polylines.clear();
@@ -224,14 +267,21 @@ class _GoalListViewState extends State<GoalListView> {
       LatLng(goallist[curGoalIndex].latEnd, goallist[curGoalIndex].longEnd),
       LatLng(goallist[curGoalIndex].latStart, goallist[curGoalIndex].longStart),
     ], color: Colors.blue, strokeWidth: 4.0));
+    polylines.add(Polyline(points: [
+      LatLng(coordinates.latitude, coordinates.longitude),
+      LatLng(goallist[curGoalIndex].latStart, goallist[curGoalIndex].longStart),
+    ], color: Colors.yellow, strokeWidth: 4.0));
+
+    //_mapController.move(coordinates, _mapController.camera.zoom);
   }
 
   Widget getMap(Goal curGoal) {
-    return FlutterMap(
+    return Flexible(
+        child: FlutterMap(
       mapController: _mapController,
       options: MapOptions(
         initialCenter: LatLng(curGoal.latStart, curGoal.longStart),
-        initialZoom: zoomLevel,
+        initialZoom: validateZoomLevel(zoomLevel),
       ),
       children: [
         TileLayer(
@@ -241,7 +291,14 @@ class _GoalListViewState extends State<GoalListView> {
         PolylineLayer(polylines: polylines),
         MarkerLayer(markers: markers),
       ],
-    );
+    ));
+  }
+
+  double validateZoomLevel(double zoom) {
+    if (zoom.isNaN || zoom.isInfinite || zoom < 0) {
+      return 5.0; // Default zoom level
+    }
+    return zoom;
   }
 
   void showPopup(BuildContext context, Goal? goal) {
@@ -249,10 +306,8 @@ class _GoalListViewState extends State<GoalListView> {
     LatLng? selectedLocationEnd;
     TextEditingController goalController =
         TextEditingController(text: goal?.name);
-    TextEditingController startPositionController =
-        TextEditingController(text: selectedLocationStart.toString());
-    TextEditingController endPositionController =
-        TextEditingController(text: selectedLocationEnd.toString());
+    TextEditingController startPositionController = TextEditingController();
+    TextEditingController endPositionController = TextEditingController();
     //'${selectedLocationEnd.latitude}, ${selectedLocationEnd.longitude}');
     TextEditingController descriptionController =
         TextEditingController(text: goal?.description);
@@ -310,7 +365,7 @@ class _GoalListViewState extends State<GoalListView> {
                   FilledButton(
                     onPressed: () async {
                       selectedLocationEnd = await showLocationPicker(
-                          context, "Startpunkt setzen");
+                          context, "Endposition setzen");
                       if (selectedLocationEnd != null) {
                         endPositionController.text =
                             selectedLocationEnd.toString();
@@ -469,10 +524,13 @@ class _GoalListViewState extends State<GoalListView> {
   }
 
   void updateUserMarker() {
+    LatLng coordinates = calculateUserPosition(goallist[curGoalIndex]);
     markers.removeLast();
     markers.add(Marker(
-        point: calculateUserPosition(goallist[curGoalIndex]),
+        point: coordinates,
         child: const Icon(Icons.person, color: Colors.black)));
+    _mapController.move(
+        coordinates, _mapController.camera.zoom); // = coordinates;
   }
 
   Future<void> loadGoalList() async {
@@ -551,6 +609,56 @@ class _GoalListViewState extends State<GoalListView> {
     );
   }
 
+  Widget getDropDownRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        goallist.isNotEmpty
+            ? DropdownButton(
+                value: goallist[curGoalIndex],
+                icon: const Icon(Icons.keyboard_arrow_down),
+                dropdownColor: Theme.of(context).primaryColorLight,
+                iconEnabledColor: Colors.white,
+                items: goallist.map((Goal item) {
+                  return DropdownMenuItem(
+                    value: item,
+                    child: Text(
+                      item.name,
+                    ),
+                  );
+                }).toList(),
+                onChanged: (Goal? newGoal) {
+                  setState(() {
+                    updateMap(newGoal);
+                  });
+                },
+              )
+            : const Text('Keine Goals bisher'),
+        IconButton(
+          onPressed: () {
+            showPopup(context, null);
+          },
+          color: Theme.of(context).colorScheme.secondary,
+          icon: Icon(
+            Icons.add,
+            color: Theme.of(context).colorScheme.onSecondary,
+          ),
+        ),
+        IconButton(
+          onPressed: () {
+            showDeleteConfirmationPopUp(context, goallist[curGoalIndex]);
+          },
+          color: Theme.of(context).colorScheme.secondary,
+          icon: Icon(
+            Icons.delete,
+            color: Theme.of(context).colorScheme.onSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
   // void toggleSelectItem(Goal item) {
   //   setState(() {
   //     if (selectedGoals.contains(item)) {
@@ -573,10 +681,25 @@ class _GoalListViewState extends State<GoalListView> {
 // restore button um ma wieder richtig auszurichten? oder rotaten komplett entfernen?
 // anderes map dingens probieren?
 // schön machen
+// multilanguage https://docs.flutter.dev/ui/accessibility-and-internationalization/internationalization (1-2h Arbeit)
 
 // ?
 // in textcontrolling field nicht latlng() printen
 // weite wege, die schräg sind da läuft unser user icon vom weg runter
-// center map on user icon
-
+// 
+// validierungen und nur digits und son kram für felder, exception funsies
+// bei goal hinzufügen overflowed das fenster
+// splash screen adden
 // now:   
+
+
+
+///  remaining, bar und adden in DraggableScrollableSheet?
+/// keine app bar
+/// wohin mit dropdown und +/-? (bleibt neben dropdown, aber in segmented buttons?
+/// map in eine card damit man den hintergrund noch sieht?
+/// 
+/// 
+/// 
+/// put + to add distance in the thumb area
+/// where to put the geschafft/total?

@@ -25,19 +25,28 @@ class MyApp extends StatelessWidget {
           ],
           theme: ThemeData(
             useMaterial3: true,
-            colorScheme:
-                ColorScheme.fromSeed(seedColor: Colors.purple.shade900),
+            colorScheme: const ColorScheme(
+                primary: Color(0xFF00aedb),
+                onPrimary: Colors.black,
+                secondary: Color(0xFF00edce),
+                onSecondary: Colors.white,
+                tertiary: Color(0xFF003ef9),
+                error: Colors.redAccent,
+                onError: Colors.white,
+                surface: Color(0xFFd6d6d6),
+                onSurface: Colors.black,
+                brightness: Brightness.light),
             textTheme: TextTheme(
-              bodyLarge: GoogleFonts.openSans(
-                fontSize: 18,
-                // fontWeight: FontWeight.bold,
-              ),
+              bodyLarge: GoogleFonts.openSans(fontSize: 18
+                  // fontWeight: FontWeight.bold,
+                  ),
               titleLarge: GoogleFonts.abel(
                 fontSize: 30,
               ),
               bodyMedium: GoogleFonts.openSans(fontSize: 20),
             ),
           ),
+          // middleblue 00aedb, light 00edce, dark 003ef9, grey d6d6d6, yellow f9bb00 lighter yellow fff0c4
           // darkTheme: ThemeData(
           //   useMaterial3: true,
           //   colorScheme: ColorScheme.fromSeed(
