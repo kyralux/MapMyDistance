@@ -101,7 +101,7 @@ class _GoalListViewState extends State<GoalListView> {
           progressColor: Colors.transparent,
           animation: true,
           center: Text(
-            '${(goallist[curGoalIndex].curDistance / goallist[curGoalIndex].totalDistance * 100).toStringAsFixed(1)}%',
+            '${(goallist[curGoalIndex].curDistance / goallist[curGoalIndex].totalDistance * 100).toStringAsFixed(1)}%', // TODO: þ|berschrieben durch gradient
             style: const TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.bold,
@@ -162,6 +162,47 @@ class _GoalListViewState extends State<GoalListView> {
     );
   }
 
+  Widget buildHeader() {
+    return Stack(
+      children: [
+        Container(
+          height: 200,
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.grey.shade600, spreadRadius: 1, blurRadius: 15)
+            ],
+            color: Theme.of(context).colorScheme.primary,
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(50),
+            ),
+          ),
+        ),
+        Column(
+          children: [
+            const SizedBox(
+              height: 40,
+            ),
+            Center(
+              child: Text("Deine Goals",
+                  style: Theme.of(context).textTheme.headlineLarge),
+            )
+          ],
+        ),
+        Column(
+          children: [
+            const SizedBox(height: 120),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: getDropDownRow(),
+            ),
+            //_buildGoalDescription(context),
+          ],
+        )
+      ],
+    );
+  }
+
   Widget buildView() {
     return Container(
       decoration: BoxDecoration(
@@ -176,14 +217,9 @@ class _GoalListViewState extends State<GoalListView> {
       ),
       child: goallist.isNotEmpty
           ? Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 50),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: getDropDownRow(),
-                ),
-                _buildGoalDescription(context),
+                buildHeader(),
+                const SizedBox(height: 10),
                 _buildGoalCard(context),
                 const SizedBox(
                   height: 50,
@@ -614,27 +650,32 @@ class _GoalListViewState extends State<GoalListView> {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
       children: [
-        goallist.isNotEmpty
-            ? DropdownButton(
-                value: goallist[curGoalIndex],
-                icon: const Icon(Icons.keyboard_arrow_down),
-                dropdownColor: Theme.of(context).primaryColorLight,
-                iconEnabledColor: Colors.white,
-                items: goallist.map((Goal item) {
-                  return DropdownMenuItem(
-                    value: item,
-                    child: Text(
-                      item.name,
-                    ),
-                  );
-                }).toList(),
-                onChanged: (Goal? newGoal) {
-                  setState(() {
-                    updateMap(newGoal);
-                  });
-                },
-              )
-            : const Text('Keine Goals bisher'),
+        SizedBox(
+            width: MediaQuery.of(context).size.width * 0.5,
+            child: DropdownButton(
+              isExpanded: true,
+              value: goallist[curGoalIndex],
+              icon: const Icon(Icons.keyboard_arrow_down),
+              dropdownColor: Theme.of(context).primaryColorLight,
+              iconEnabledColor: Colors.white,
+              items: goallist.map((Goal item) {
+                return DropdownMenuItem(
+                  value: item,
+                  child: Text(
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    item.name.length < 48
+                        ? item.name
+                        : item.name.substring(0, 5),
+                  ),
+                );
+              }).toList(),
+              onChanged: (Goal? newGoal) {
+                setState(() {
+                  updateMap(newGoal);
+                });
+              },
+            )),
         IconButton(
           onPressed: () {
             showPopup(context, null);
