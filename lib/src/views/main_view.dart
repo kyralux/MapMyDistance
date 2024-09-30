@@ -6,6 +6,7 @@ import 'dart:math' show cos, sqrt, asin;
 import 'package:percent_indicator/percent_indicator.dart';
 
 import 'package:mapgoal/src/data/goal.dart';
+import 'package:mapgoal/src/settings/settings_view.dart';
 
 import 'package:mapgoal/src/storage/database_helper.dart';
 
@@ -36,6 +37,22 @@ class _GoalListViewState extends State<GoalListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'MapMyDistance',
+          style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+        ),
+        backgroundColor: Theme.of(context).primaryColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            color: Theme.of(context).colorScheme.onPrimary,
+            onPressed: () {
+              Navigator.restorablePushNamed(context, SettingsView.routeName);
+            },
+          ),
+        ],
+      ),
       body: buildView(),
       floatingActionButton:
           goallist.isNotEmpty ? _buildActionButton(context) : null,
@@ -100,14 +117,6 @@ class _GoalListViewState extends State<GoalListView> {
           backgroundColor: Colors.white,
           progressColor: Colors.transparent,
           animation: true,
-          center: Text(
-            '${(goallist[curGoalIndex].curDistance / goallist[curGoalIndex].totalDistance * 100).toStringAsFixed(1)}%', // TODO: þ|berschrieben durch gradient
-            style: const TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
         ),
         Positioned.fill(
           child: FractionallySizedBox(
@@ -128,6 +137,15 @@ class _GoalListViewState extends State<GoalListView> {
             ),
           ),
         ),
+        Center(
+            child: Text(
+          '${(goallist[curGoalIndex].curDistance / goallist[curGoalIndex].totalDistance * 100).toStringAsFixed(1)}%',
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        )),
       ],
     );
   }
@@ -139,7 +157,7 @@ class _GoalListViewState extends State<GoalListView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Text(
-            'Keine Goals bisher',
+            'Erstelle dein erstes Ziel',
             style: TextStyle(fontSize: 18.0),
           ),
           const SizedBox(height: 20),
@@ -166,7 +184,7 @@ class _GoalListViewState extends State<GoalListView> {
     return Stack(
       children: [
         Container(
-          height: 200,
+          height: MediaQuery.of(context).size.height * 0.24,
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
@@ -183,22 +201,17 @@ class _GoalListViewState extends State<GoalListView> {
             const SizedBox(
               height: 40,
             ),
-            Center(
-              child: Text("Deine Goals",
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Text("Deine Goals",
                   style: Theme.of(context).textTheme.headlineLarge),
-            )
+              IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  })
+            ])
           ],
         ),
-        Column(
-          children: [
-            const SizedBox(height: 120),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: getDropDownRow(),
-            ),
-            //_buildGoalDescription(context),
-          ],
-        )
       ],
     );
   }
@@ -218,7 +231,6 @@ class _GoalListViewState extends State<GoalListView> {
       child: goallist.isNotEmpty
           ? Column(
               children: [
-                buildHeader(),
                 const SizedBox(height: 10),
                 _buildGoalCard(context),
                 const SizedBox(
@@ -230,18 +242,18 @@ class _GoalListViewState extends State<GoalListView> {
     );
   }
 
-  Widget _buildGoalDescription(BuildContext context) {
-    if (goallist[curGoalIndex].description.isNotEmpty) {
-      return Container(
-          alignment: Alignment.center,
-          child: Text(
-            goallist[curGoalIndex].description,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ));
-    }
+  // Widget _buildGoalDescription(BuildContext context) {
+  //   if (goallist[curGoalIndex].description.isNotEmpty) {
+  //     return Container(
+  //         alignment: Alignment.center,
+  //         child: Text(
+  //           goallist[curGoalIndex].description,
+  //           style: Theme.of(context).textTheme.bodyMedium,
+  //         ));
+  //   }
 
-    return const SizedBox.shrink(); // Return an empty widget if no description
-  }
+  //   return const SizedBox.shrink(); // Return an empty widget if no description
+  // }
 
   Widget _buildGoalCard(BuildContext context) {
     return Flexible(
@@ -263,6 +275,7 @@ class _GoalListViewState extends State<GoalListView> {
                 flex: 10,
                 child: Column(
                   children: [
+                    getDropDownRow(),
                     getMap(goallist[curGoalIndex]),
                     Padding(
                       padding: const EdgeInsets.all(0),
@@ -313,21 +326,22 @@ class _GoalListViewState extends State<GoalListView> {
 
   Widget getMap(Goal curGoal) {
     return Flexible(
+        flex: 10,
         child: FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: LatLng(curGoal.latStart, curGoal.longStart),
-        initialZoom: validateZoomLevel(zoomLevel),
-      ),
-      children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'dev.fleaflet.flutter_map.example',
-        ),
-        PolylineLayer(polylines: polylines),
-        MarkerLayer(markers: markers),
-      ],
-    ));
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: LatLng(curGoal.latStart, curGoal.longStart),
+            initialZoom: validateZoomLevel(zoomLevel),
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'dev.fleaflet.flutter_map.example',
+            ),
+            PolylineLayer(polylines: polylines),
+            MarkerLayer(markers: markers),
+          ],
+        ));
   }
 
   double validateZoomLevel(double zoom) {
@@ -646,75 +660,60 @@ class _GoalListViewState extends State<GoalListView> {
   }
 
   Widget getDropDownRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        SizedBox(
-            width: MediaQuery.of(context).size.width * 0.5,
-            child: DropdownButton(
-              isExpanded: true,
-              value: goallist[curGoalIndex],
-              icon: const Icon(Icons.keyboard_arrow_down),
-              dropdownColor: Theme.of(context).primaryColorLight,
-              iconEnabledColor: Colors.white,
-              items: goallist.map((Goal item) {
-                return DropdownMenuItem(
-                  value: item,
-                  child: Text(
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    item.name.length < 48
-                        ? item.name
-                        : item.name.substring(0, 5),
-                  ),
-                );
-              }).toList(),
-              onChanged: (Goal? newGoal) {
-                setState(() {
-                  updateMap(newGoal);
-                });
+    return Container(
+        color: Theme.of(context).colorScheme.secondary,
+        child: Row(
+          children: [
+            const Padding(padding: EdgeInsets.only(left: 10)),
+            SizedBox(
+                width: MediaQuery.of(context).size.width * 0.62,
+                child: DropdownButton(
+                  isExpanded: true,
+                  value: goallist[curGoalIndex],
+                  icon: const Icon(Icons.keyboard_arrow_down),
+                  dropdownColor: Theme.of(context).colorScheme.secondary,
+                  iconEnabledColor: Theme.of(context).colorScheme.onSecondary,
+                  focusColor: Colors.black,
+                  items: goallist.map((Goal item) {
+                    return DropdownMenuItem(
+                      value: item,
+                      child: Text(
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSecondary),
+                        overflow: TextOverflow.ellipsis,
+                        item.name,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (Goal? newGoal) {
+                    setState(() {
+                      updateMap(newGoal);
+                    });
+                  },
+                )),
+            IconButton(
+              onPressed: () {
+                showPopup(context, null);
               },
-            )),
-        IconButton(
-          onPressed: () {
-            showPopup(context, null);
-          },
-          color: Theme.of(context).colorScheme.secondary,
-          icon: Icon(
-            Icons.add,
-            color: Theme.of(context).colorScheme.onSecondary,
-          ),
-        ),
-        IconButton(
-          onPressed: () {
-            showDeleteConfirmationPopUp(context, goallist[curGoalIndex]);
-          },
-          color: Theme.of(context).colorScheme.secondary,
-          icon: Icon(
-            Icons.delete,
-            color: Theme.of(context).colorScheme.onSecondary,
-          ),
-        ),
-      ],
-    );
+              color: Theme.of(context).colorScheme.secondary,
+              icon: Icon(
+                Icons.add,
+                color: Theme.of(context).colorScheme.onSecondary,
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                showDeleteConfirmationPopUp(context, goallist[curGoalIndex]);
+              },
+              color: Theme.of(context).colorScheme.secondary,
+              icon: Icon(
+                Icons.delete,
+                color: Theme.of(context).colorScheme.onSecondary,
+              ),
+            ),
+          ],
+        ));
   }
-
-  // void toggleSelectItem(Goal item) {
-  //   setState(() {
-  //     if (selectedGoals.contains(item)) {
-  //       selectedGoals.remove(item);
-  //     } else {
-  //       selectedGoals.add(item);
-  //     }
-  //   });
-  // }
-
-  // void toggleEditMode() {
-  //   setState(() {
-  //     _editMode = !_editMode;
-  //   });
-  // }
 }
 
 // slower
@@ -744,3 +743,7 @@ class _GoalListViewState extends State<GoalListView> {
 /// 
 /// put + to add distance in the thumb area
 /// where to put the geschafft/total?
+/// 
+/// gelb wird nicht gemalt nach dem adden
+/// es gibt keinen settings button beim empty goals screen
+/// bar prozent ist nicht mittig

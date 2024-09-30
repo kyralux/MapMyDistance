@@ -29,11 +29,11 @@ class MyApp extends StatelessWidget {
                 primary: Color(0xFF00aedb),
                 onPrimary: Colors.black,
                 secondary: Color(0xFF00edce),
-                onSecondary: Colors.white,
+                onSecondary: Color.fromARGB(255, 5, 58, 67),
                 tertiary: Color(0xFF003ef9),
                 error: Colors.redAccent,
                 onError: Colors.white,
-                surface: Color(0xFFd6d6d6),
+                surface: Color(0xFF00aedb),
                 onSurface: Colors.black,
                 brightness: Brightness.light),
             textTheme: TextTheme(
