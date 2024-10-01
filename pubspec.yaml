@@ -15,6 +15,7 @@ dependencies:
   sqflite: ^2.3.3+1
   path: ^1.9.0
   flutter_map: ^6.1.0
+  flutter_map_math: ^0.1.7
   latlong2: ^0.9.1
   percent_indicator: ^4.2.3
 

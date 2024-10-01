@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'dart:math' show cos, sqrt, asin;
+//import 'dart:math' show cos, sqrt, asin;
 
 import 'package:percent_indicator/percent_indicator.dart';
 
@@ -9,6 +9,7 @@ import 'package:mapgoal/src/data/goal.dart';
 import 'package:mapgoal/src/settings/settings_view.dart';
 
 import 'package:mapgoal/src/storage/database_helper.dart';
+import 'package:flutter_map_math/flutter_geo_math.dart';
 
 class GoalListView extends StatefulWidget {
   const GoalListView({super.key});
@@ -77,6 +78,16 @@ class _GoalListViewState extends State<GoalListView> {
   }
 
   LatLng calculateUserPosition(Goal curGoal) {
+    // double bearing = FlutterMapMath().bearingBetween(
+    //   curGoal.latStart,
+    //   curGoal.longStart,
+    //   curGoal.latEnd,
+    //   curGoal.longEnd,
+    // );
+
+    // LatLng destinationPoint = FlutterMapMath().destinationPoint(
+    //     curGoal.latStart, curGoal.longStart, curGoal.curDistance, bearing);
+
     double percentage = curGoal.curDistance / curGoal.totalDistance;
     double userLat =
         curGoal.latStart + (curGoal.latEnd - curGoal.latStart) * percentage;
@@ -87,23 +98,13 @@ class _GoalListViewState extends State<GoalListView> {
   }
 
   double calculateDistanceGoal(Goal curGoal) {
-    var p = 0.017453292519943295;
-    var a = 0.5 -
-        cos((curGoal.latEnd - curGoal.latStart) * p) / 2 +
-        cos(curGoal.latStart * p) *
-            cos(curGoal.latEnd * p) *
-            (1 - cos((curGoal.longEnd - curGoal.longStart) * p)) /
-            2;
-    return 12742 * asin(sqrt(a));
+    return FlutterMapMath().distanceBetween(curGoal.latStart, curGoal.longStart,
+        curGoal.latEnd, curGoal.longEnd, "kilometers");
   }
 
   double calculateDistance(lat1, lon1, lat2, lon2) {
-    var p = 0.017453292519943295;
-    var c = cos;
-    var a = 0.5 -
-        c((lat2 - lat1) * p) / 2 +
-        c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2;
-    return 12742 * asin(sqrt(a));
+    return FlutterMapMath()
+        .distanceBetween(lat1, lon1, lat2, lon2, "kilometers");
   }
 
   Widget getProgressBar() {
@@ -330,6 +331,10 @@ class _GoalListViewState extends State<GoalListView> {
         child: FlutterMap(
           mapController: _mapController,
           options: MapOptions(
+            minZoom: 1.0,
+            //maxZoom: 17.0,
+            interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag),
             initialCenter: LatLng(curGoal.latStart, curGoal.longStart),
             initialZoom: validateZoomLevel(zoomLevel),
           ),
