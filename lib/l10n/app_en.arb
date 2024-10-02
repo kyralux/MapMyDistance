@@ -1,0 +1,19 @@
+{
+    "cancel": "Cancel",
+    "save": "Save",
+    "emptyText": "Create your first goal",
+    "newGoalTitle": "Create a new goal",
+    "newGoalName": "Name",
+    "newGoaStart": "Starting position",
+    "newGoalEnde": "Goal position",
+    "newGoaDistance": "Calculated distance between start and goal:",
+    "locationPickerStart": "Set starting position",
+    "locationPickerEnd": "Set goal position",
+    "distanceTitle": "Distance traveled",
+    "distanceDescription":"How much distance do you want to add?",
+    "deletionTitle": "Confirm deletion",
+    "deletionDescription": "Do you really want to remove this goal?",
+    "deletionSubmit": "Delete",
+    "distanceHint": "Enter distance",
+    "errorValidNumber": "Enter a valid number"
+}

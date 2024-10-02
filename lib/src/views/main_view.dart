@@ -1,3 +1,4 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -28,6 +29,7 @@ class _GoalListViewState extends State<GoalListView> {
   List<Polyline> polylines = [];
   double zoomLevel = 5.0;
   double calculatedDistance = 0.0;
+  String unit = "km";
 
   @override
   void initState() {
@@ -36,12 +38,30 @@ class _GoalListViewState extends State<GoalListView> {
   }
 
   @override
+  void dispose() {
+    _mapController.dispose();
+    _mapControllerDialog.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'MapMyDistance',
-          style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+        title: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Image.asset(
+                "image/gradientGPS-empty.PNG",
+                height: MediaQuery.of(context).size.height * 0.05,
+              ),
+            ),
+            Text(
+              'MapMyDistance',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ],
         ),
         backgroundColor: Theme.of(context).primaryColor,
         actions: [
@@ -54,7 +74,30 @@ class _GoalListViewState extends State<GoalListView> {
           ),
         ],
       ),
-      body: buildView(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.secondary
+            ],
+          ),
+        ),
+        child: goallist.isNotEmpty
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 10),
+                  _buildGoalCard(context),
+                  const SizedBox(
+                    height: 50,
+                  )
+                ],
+              )
+            : _buildEmptyView(context),
+      ),
       floatingActionButton:
           goallist.isNotEmpty ? _buildActionButton(context) : null,
     );
@@ -86,7 +129,10 @@ class _GoalListViewState extends State<GoalListView> {
     // );
 
     // LatLng destinationPoint = FlutterMapMath().destinationPoint(
-    //     curGoal.latStart, curGoal.longStart, curGoal.curDistance, bearing);
+    //     curGoal.latStart,
+    //     curGoal.longStart,
+    //     curGoal.curDistance * 1000,
+    //     bearing);
 
     double percentage = curGoal.curDistance / curGoal.totalDistance;
     double userLat =
@@ -155,11 +201,12 @@ class _GoalListViewState extends State<GoalListView> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            'Erstelle dein erstes Ziel',
-            style: TextStyle(fontSize: 18.0),
+          Text(
+            AppLocalizations.of(context)!.emptyText,
+            style: const TextStyle(fontSize: 18.0),
           ),
           const SizedBox(height: 20),
           Row(
@@ -181,79 +228,40 @@ class _GoalListViewState extends State<GoalListView> {
     );
   }
 
-  Widget buildHeader() {
-    return Stack(
-      children: [
-        Container(
-          height: MediaQuery.of(context).size.height * 0.24,
-          decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.grey.shade600, spreadRadius: 1, blurRadius: 15)
-            ],
-            color: Theme.of(context).colorScheme.primary,
-            borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(50),
-            ),
-          ),
-        ),
-        Column(
-          children: [
-            const SizedBox(
-              height: 40,
-            ),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text("Deine Goals",
-                  style: Theme.of(context).textTheme.headlineLarge),
-              IconButton(
-                  icon: const Icon(Icons.settings),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  })
-            ])
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget buildView() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.secondary
-          ],
-        ),
-      ),
-      child: goallist.isNotEmpty
-          ? Column(
-              children: [
-                const SizedBox(height: 10),
-                _buildGoalCard(context),
-                const SizedBox(
-                  height: 50,
-                )
-              ],
-            )
-          : _buildEmptyView(context),
-    );
-  }
-
-  // Widget _buildGoalDescription(BuildContext context) {
-  //   if (goallist[curGoalIndex].description.isNotEmpty) {
-  //     return Container(
-  //         alignment: Alignment.center,
-  //         child: Text(
-  //           goallist[curGoalIndex].description,
-  //           style: Theme.of(context).textTheme.bodyMedium,
-  //         ));
-  //   }
-
-  //   return const SizedBox.shrink(); // Return an empty widget if no description
+  // Widget buildHeader() {
+  //   return Stack(
+  //     children: [
+  //       Container(
+  //         height: MediaQuery.of(context).size.height * 0.24,
+  //         decoration: BoxDecoration(
+  //           boxShadow: [
+  //             BoxShadow(
+  //                 color: Colors.grey.shade600, spreadRadius: 1, blurRadius: 15)
+  //           ],
+  //           color: Theme.of(context).colorScheme.primary,
+  //           borderRadius: const BorderRadius.vertical(
+  //             bottom: Radius.circular(50),
+  //           ),
+  //         ),
+  //       ),
+  //       Column(
+  //         children: [
+  //           const SizedBox(
+  //             height: 40,
+  //           ),
+  //           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+  //             Text("Your Goals",
+  //                 style: Theme.of(context).textTheme.headlineLarge),
+  //             IconButton(
+  //                 icon: const Icon(Icons.settings),
+  //                 onPressed: () {
+  //                   Navigator.of(context).pop();
+  //                 })
+  //           ])
+  //         ],
+  //       ),
+  //     ],
+  //   );
   // }
 
   Widget _buildGoalCard(BuildContext context) {
@@ -272,24 +280,32 @@ class _GoalListViewState extends State<GoalListView> {
           elevation: 5,
           child: ClipRRect(
               borderRadius: BorderRadius.circular(16.0),
-              child: Flexible(
-                flex: 10,
-                child: Column(
-                  children: [
-                    getDropDownRow(),
-                    getMap(goallist[curGoalIndex]),
-                    Padding(
-                      padding: const EdgeInsets.all(0),
-                      child: getProgressBar(),
-                    ),
-                    Text(
-                      "${goallist[curGoalIndex].curDistance} / ${double.parse((goallist[curGoalIndex].totalDistance - goallist[curGoalIndex].curDistance).toStringAsFixed(2))} km",
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    )
-                  ],
-                ),
-              )),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Flexible(
+                  flex: 10,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      getDropDownRow(),
+                      getMap(
+                          LatLng(goallist[curGoalIndex].latStart,
+                              goallist[curGoalIndex].longStart),
+                          polylines,
+                          markers,
+                          _mapController),
+                      Padding(
+                        padding: const EdgeInsets.all(0),
+                        child: getProgressBar(),
+                      ),
+                      Text(
+                        "${goallist[curGoalIndex].curDistance} / ${double.parse((goallist[curGoalIndex].totalDistance - goallist[curGoalIndex].curDistance).toStringAsFixed(2))} $unit",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      )
+                    ],
+                  ),
+                )
+              ])),
         ),
       ),
     );
@@ -303,11 +319,13 @@ class _GoalListViewState extends State<GoalListView> {
       Marker(
           point: LatLng(goallist[curGoalIndex].latStart,
               goallist[curGoalIndex].longStart),
-          child: const Icon(Icons.location_on, color: Colors.pink)),
+          child: Icon(Icons.fiber_manual_record,
+              color: Theme.of(context).colorScheme.secondary)),
       Marker(
           point: LatLng(
               goallist[curGoalIndex].latEnd, goallist[curGoalIndex].longEnd),
-          child: const Icon(Icons.location_on, color: Colors.blue)),
+          child:
+              Icon(Icons.flag, color: Theme.of(context).colorScheme.secondary)),
       Marker(
           point: coordinates,
           child: const Icon(Icons.person, color: Colors.black))
@@ -316,26 +334,28 @@ class _GoalListViewState extends State<GoalListView> {
     polylines.add(Polyline(points: [
       LatLng(goallist[curGoalIndex].latEnd, goallist[curGoalIndex].longEnd),
       LatLng(goallist[curGoalIndex].latStart, goallist[curGoalIndex].longStart),
-    ], color: Colors.blue, strokeWidth: 4.0));
+    ], color: Colors.grey, strokeWidth: 4.0));
     polylines.add(Polyline(points: [
       LatLng(coordinates.latitude, coordinates.longitude),
       LatLng(goallist[curGoalIndex].latStart, goallist[curGoalIndex].longStart),
-    ], color: Colors.yellow, strokeWidth: 4.0));
+    ], color: Theme.of(context).colorScheme.tertiary, strokeWidth: 4.0));
 
+    // somehow this only works after the first loading of the app
     //_mapController.move(coordinates, _mapController.camera.zoom);
   }
 
-  Widget getMap(Goal curGoal) {
+  Widget getMap(LatLng coordinates, List<Polyline> polylist,
+      List<Marker> markerlist, MapController mapController) {
     return Flexible(
         flex: 10,
         child: FlutterMap(
-          mapController: _mapController,
+          mapController: mapController,
           options: MapOptions(
             minZoom: 1.0,
-            //maxZoom: 17.0,
+            maxZoom: 20.0,
             interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag),
-            initialCenter: LatLng(curGoal.latStart, curGoal.longStart),
+            initialCenter: coordinates,
             initialZoom: validateZoomLevel(zoomLevel),
           ),
           children: [
@@ -343,15 +363,15 @@ class _GoalListViewState extends State<GoalListView> {
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'dev.fleaflet.flutter_map.example',
             ),
-            PolylineLayer(polylines: polylines),
-            MarkerLayer(markers: markers),
+            PolylineLayer(polylines: polylist),
+            MarkerLayer(markers: markerlist),
           ],
         ));
   }
 
   double validateZoomLevel(double zoom) {
     if (zoom.isNaN || zoom.isInfinite || zoom < 0) {
-      return 5.0; // Default zoom level
+      return 5.0;
     }
     return zoom;
   }
@@ -363,34 +383,31 @@ class _GoalListViewState extends State<GoalListView> {
         TextEditingController(text: goal?.name);
     TextEditingController startPositionController = TextEditingController();
     TextEditingController endPositionController = TextEditingController();
-    //'${selectedLocationEnd.latitude}, ${selectedLocationEnd.longitude}');
-    TextEditingController descriptionController =
-        TextEditingController(text: goal?.description);
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(builder: (context, StateSetter setState) {
           return AlertDialog(
-            title: const Text('Neues Goal hinzufügen'),
+            title: Text(AppLocalizations.of(context)!.newGoalTitle),
             content: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                     controller: goalController,
-                    decoration: const InputDecoration(hintText: "Name")),
-                TextField(
-                    controller: descriptionController,
-                    decoration:
-                        const InputDecoration(hintText: "Beschreibung")),
+                    decoration: InputDecoration(
+                        hintText: AppLocalizations.of(context)!.newGoalName)),
                 Row(children: [
                   Expanded(
                       child: TextField(
                           controller: startPositionController,
-                          decoration: const InputDecoration(
-                              hintText: "Startposition"))),
+                          decoration: InputDecoration(
+                              hintText:
+                                  AppLocalizations.of(context)!.newGoaStart))),
                   FilledButton(
                     onPressed: () async {
-                      selectedLocationStart = await showLocationPicker(
-                          context, "Startpunkt setzen");
+                      selectedLocationStart = await showLocationPicker(context,
+                          AppLocalizations.of(context)!.locationPickerStart);
                       if (selectedLocationStart != null) {
                         startPositionController.text =
                             selectedLocationStart.toString();
@@ -415,12 +432,13 @@ class _GoalListViewState extends State<GoalListView> {
                   Expanded(
                       child: TextField(
                           controller: endPositionController,
-                          decoration:
-                              const InputDecoration(hintText: "Endposition"))),
+                          decoration: InputDecoration(
+                              hintText: AppLocalizations.of(context)!
+                                  .locationPickerEnd))),
                   FilledButton(
                     onPressed: () async {
-                      selectedLocationEnd = await showLocationPicker(
-                          context, "Endposition setzen");
+                      selectedLocationEnd = await showLocationPicker(context,
+                          AppLocalizations.of(context)!.locationPickerEnd);
                       if (selectedLocationEnd != null) {
                         endPositionController.text =
                             selectedLocationEnd.toString();
@@ -441,38 +459,77 @@ class _GoalListViewState extends State<GoalListView> {
                     ),
                   ),
                 ]),
-                Text(
-                  "Berechnete Distanz zwischen Start- und Endpunkt: ${double.parse((calculatedDistance).toStringAsFixed(2))} km",
+                const SizedBox(
+                  height: 50,
                 ),
-              ], // probleme: start und end sind nicht unbedingt in der richtigen reihenfolge besettz. ich muss das quasi berechnen sobald beide gesetzt sind. but how?
+                Text(AppLocalizations.of(context)!.newGoaDistance,
+                    style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(
+                  height: 10,
+                ),
+                Card(
+                    color: Theme.of(context).colorScheme.secondary,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Text(
+                          "${double.parse((calculatedDistance).toStringAsFixed(2))} $unit",
+                          style: Theme.of(context).textTheme.bodyMedium),
+                    )),
+              ],
             ),
             actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Abbrechen'),
-              ),
-              TextButton(
-                onPressed: () {
-                  if (selectedLocationEnd != null &&
-                      selectedLocationStart != null) {
-                    addGoal(
-                        goalController.text,
-                        descriptionController.text,
-                        selectedLocationStart!.latitude,
-                        selectedLocationStart!.longitude,
-                        selectedLocationEnd!.latitude,
-                        selectedLocationEnd!.longitude,
-                        false,
-                        calculatedDistance,
-                        0.0);
-                  }
-                  calculatedDistance = 0;
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Speichern'),
-              ),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                FilledButton(
+                  style: ButtonStyle(
+                      backgroundColor: WidgetStateProperty.all(
+                          Color.fromARGB(255, 223, 223, 223))),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(AppLocalizations.of(context)!.cancel,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium!
+                              .copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface))),
+                ),
+                FilledButton(
+                  style: ButtonStyle(
+                      backgroundColor: WidgetStateProperty.all(
+                          Theme.of(context).colorScheme.secondary)),
+                  onPressed: () {
+                    if (selectedLocationEnd != null &&
+                        selectedLocationStart != null) {
+                      addGoal(
+                          goalController.text,
+                          "",
+                          selectedLocationStart!.latitude,
+                          selectedLocationStart!.longitude,
+                          selectedLocationEnd!.latitude,
+                          selectedLocationEnd!.longitude,
+                          false,
+                          calculatedDistance,
+                          0.0);
+                    }
+                    calculatedDistance = 0;
+                    Navigator.of(context).pop();
+                  },
+                  child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(AppLocalizations.of(context)!.save,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium!
+                              .copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface))),
+                ),
+              ])
             ],
           );
         });
@@ -494,23 +551,27 @@ class _GoalListViewState extends State<GoalListView> {
               height: 400,
               child: Stack(
                 children: [
-                  FlutterMap(
-                    mapController: _mapControllerDialog,
-                    options: MapOptions(
-                      initialCenter: const LatLng(51.435146, 6.762692),
-                      initialZoom: zoomLevel,
-                      interactionOptions:
-                          InteractionOptions(rotationThreshold: 50),
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName:
-                            'dev.fleaflet.flutter_map.example',
-                      )
-                    ],
-                  ),
+                  getMap(
+                      LatLng(goallist[curGoalIndex].latStart,
+                          goallist[curGoalIndex].longStart),
+                      List<Polyline>.empty(),
+                      List<Marker>.empty(),
+                      _mapControllerDialog),
+                  // FlutterMap(
+                  //   mapController: _mapControllerDialog,
+                  //   options: MapOptions(
+                  //     initialCenter: const LatLng(51.435146, 6.762692),
+                  //     initialZoom: zoomLevel,
+                  //   ),
+                  //   children: [
+                  //     TileLayer(
+                  //       urlTemplate:
+                  //           'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  //       userAgentPackageName:
+                  //           'dev.fleaflet.flutter_map.example',
+                  //     )
+                  //   ],
+                  // ),
                   const Center(
                     child: Icon(
                       Icons.location_pin,
@@ -525,13 +586,19 @@ class _GoalListViewState extends State<GoalListView> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Abbrechen'),
+              child: Text(
+                AppLocalizations.of(context)!.cancel,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(_mapControllerDialog.camera.center);
               },
-              child: const Text('Speichern'),
+              child: Text(
+                AppLocalizations.of(context)!.save,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
           ],
         );
@@ -542,30 +609,89 @@ class _GoalListViewState extends State<GoalListView> {
   void showWorkoutPopup(BuildContext context, Goal? goal) {
     TextEditingController distanceController =
         TextEditingController(text: goal?.name);
+    final formKey = GlobalKey<FormState>();
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Distanz zurückgelegt'),
-          content: TextField(
-              controller: distanceController,
-              decoration: const InputDecoration(hintText: "km")),
+          title: Text(AppLocalizations.of(context)!.distanceTitle),
+          content: Form(
+              key: formKey,
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(AppLocalizations.of(context)!.distanceDescription),
+                const SizedBox(height: 10),
+                Row(children: [
+                  Expanded(
+                      child: TextFormField(
+                    controller: distanceController,
+                    decoration: InputDecoration(
+                        hintText: AppLocalizations.of(context)!.distanceHint,
+                        border: OutlineInputBorder()),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return AppLocalizations.of(context)!.distanceHint;
+                      }
+                      final doubleValue = double.tryParse(value);
+                      if (doubleValue == null) {
+                        return AppLocalizations.of(context)!.errorValidNumber;
+                      }
+                      return null;
+                    },
+                  )),
+                  const SizedBox(width: 10),
+                  Text(unit)
+                ]),
+              ])),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Abbrechen'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  addWorkout(double.parse(distanceController.text));
-                });
-                Navigator.of(context).pop();
-              },
-              child: const Text('Speichern'),
-            ),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              FilledButton(
+                style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.all(
+                        Color.fromARGB(255, 223, 223, 223))),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text(AppLocalizations.of(context)!.cancel,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface)),
+              ),
+              FilledButton(
+                style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.all(
+                        Theme.of(context).colorScheme.secondary)),
+                onPressed: () {
+                  if (formKey.currentState?.validate() ?? false) {
+                    setState(() {
+                      addWorkout(double.parse(distanceController.text));
+                      Navigator.of(context).pop();
+                    });
+                  }
+                },
+                child: Text(AppLocalizations.of(context)!.save,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface)),
+              )
+            ]),
+            // TextButton(
+            //   onPressed: () {
+            //     Navigator.of(context).pop();
+            //   },
+            //   child: Text(AppLocalizations.of(context)!.cancel,
+            //       style: Theme.of(context).textTheme.bodyMedium),
+            // ),
+            // TextButton(
+            //   onPressed: () {
+            //     if (formKey.currentState?.validate() ?? false) {
+            //       setState(() {
+            //         addWorkout(double.parse(distanceController.text));
+            //         Navigator.of(context).pop();
+            //       });
+            //     }
+            //   },
+            //   child: Text(AppLocalizations.of(context)!.save,
+            //       style: Theme.of(context).textTheme.bodyMedium),
+            // ),
           ],
         );
       },
@@ -584,8 +710,12 @@ class _GoalListViewState extends State<GoalListView> {
     markers.add(Marker(
         point: coordinates,
         child: const Icon(Icons.person, color: Colors.black)));
-    _mapController.move(
-        coordinates, _mapController.camera.zoom); // = coordinates;
+    polylines.removeLast();
+    polylines.add(Polyline(points: [
+      LatLng(coordinates.latitude, coordinates.longitude),
+      LatLng(goallist[curGoalIndex].latStart, goallist[curGoalIndex].longStart),
+    ], color: Theme.of(context).colorScheme.tertiary, strokeWidth: 4.0));
+    _mapController.move(coordinates, _mapController.camera.zoom);
   }
 
   Future<void> loadGoalList() async {
@@ -642,22 +772,42 @@ class _GoalListViewState extends State<GoalListView> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Löschen bestätigen"),
-          content: Text("Wirklich das Goal \"${goal.name}\" löschen?"),
+          title: Text(AppLocalizations.of(context)!.deletionTitle),
+          content: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(AppLocalizations.of(context)!.deletionDescription,
+                    style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: 10),
+                Text(goal.name, style: Theme.of(context).textTheme.bodyLarge)
+              ]),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                deleteGoal(goal);
-              },
-              child: const Text('Löschen'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Abbrechen'),
-            ),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              FilledButton(
+                style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.all(
+                        Color.fromARGB(255, 223, 223, 223))),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text(AppLocalizations.of(context)!.cancel,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface)),
+              ),
+              FilledButton(
+                style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.all(
+                        Theme.of(context).colorScheme.error)),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  deleteGoal(goal);
+                },
+                child: Text(AppLocalizations.of(context)!.deletionSubmit,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onError)),
+              ),
+            ])
           ],
         );
       },
@@ -671,14 +821,13 @@ class _GoalListViewState extends State<GoalListView> {
           children: [
             const Padding(padding: EdgeInsets.only(left: 10)),
             SizedBox(
-                width: MediaQuery.of(context).size.width * 0.62,
+                width: MediaQuery.of(context).size.width * 0.60,
                 child: DropdownButton(
                   isExpanded: true,
                   value: goallist[curGoalIndex],
                   icon: const Icon(Icons.keyboard_arrow_down),
                   dropdownColor: Theme.of(context).colorScheme.secondary,
                   iconEnabledColor: Theme.of(context).colorScheme.onSecondary,
-                  focusColor: Colors.black,
                   items: goallist.map((Goal item) {
                     return DropdownMenuItem(
                       value: item,
@@ -736,19 +885,10 @@ class _GoalListViewState extends State<GoalListView> {
 // bei goal hinzufügen overflowed das fenster
 // splash screen adden
 // now:   
-
-
-
-///  remaining, bar und adden in DraggableScrollableSheet?
-/// keine app bar
-/// wohin mit dropdown und +/-? (bleibt neben dropdown, aber in segmented buttons?
-/// map in eine card damit man den hintergrund noch sieht?
-/// 
-/// 
-/// 
-/// put + to add distance in the thumb area
-/// where to put the geschafft/total?
 /// 
 /// gelb wird nicht gemalt nach dem adden
 /// es gibt keinen settings button beim empty goals screen
 /// bar prozent ist nicht mittig
+/// 
+/// add popup when goal is reached
+/// validate input 

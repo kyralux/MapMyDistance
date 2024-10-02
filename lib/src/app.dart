@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mapgoal/src/views/main_view.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
@@ -19,27 +20,29 @@ class MyApp extends StatelessWidget {
       listenable: settingsController,
       builder: (BuildContext context, Widget? child) {
         return MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           restorationScopeId: 'app',
-          supportedLocales: const [
-            Locale('en', ''),
-          ],
           theme: ThemeData(
             useMaterial3: true,
+            focusColor: Colors.pink,
             colorScheme: const ColorScheme(
-                primary: Color(0xFF00aedb),
+                //Color(0xFF00aedb) primary
+                //Color(0xFF00edce) sec
+
+                primary: Color.fromARGB(255, 255, 255, 255),
                 onPrimary: Colors.black,
-                secondary: Color(0xFF00edce),
-                onSecondary: Color.fromARGB(255, 5, 58, 67),
+                secondary: Color.fromARGB(255, 54, 212, 223),
+                onSecondary: Color.fromARGB(
+                    255, 79, 79, 79), // Color.fromARGB(255, 61, 113, 255),
                 tertiary: Color(0xFF003ef9),
                 error: Colors.redAccent,
                 onError: Colors.white,
-                surface: Color(0xFF00aedb),
+                surface: Color.fromARGB(255, 255, 231, 160),
                 onSurface: Colors.black,
                 brightness: Brightness.light),
             textTheme: TextTheme(
-              bodyLarge: GoogleFonts.openSans(fontSize: 18
-                  // fontWeight: FontWeight.bold,
-                  ),
+              bodyLarge: GoogleFonts.openSans(fontSize: 18),
               titleLarge: GoogleFonts.abel(
                 fontSize: 30,
               ),
@@ -86,3 +89,10 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+
+// 
+/// 
+/// start, end fix symbols text + deutlicher
+/// fix distance calculation - started
+/// eval inputs
