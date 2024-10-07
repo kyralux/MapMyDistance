@@ -89,10 +89,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-
-// 
-/// 
-/// start, end fix symbols text + deutlicher
-/// fix distance calculation - started
-/// eval inputs

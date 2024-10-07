@@ -15,5 +15,6 @@
     "deletionDescription": "Do you really want to remove this goal?",
     "deletionSubmit": "Delete",
     "distanceHint": "Enter distance",
-    "errorValidNumber": "Enter a valid number"
+    "errorValidNumber": "Enter a valid number",
+    "errorGoalNameLong": "Too many characters, limit it to 100"
 }

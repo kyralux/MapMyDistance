@@ -15,5 +15,6 @@
   "deletionDescription": "Willst du dieses Ziel wirklich entfernen?",
   "deletionSubmit": "Löschen",
   "distanceHint": "Distanz",
-  "errorValidNumber": "ungültige Zahl"
+  "errorValidNumber": "ungültige Zahl",
+  "errorGoalNameLong": "Zu langer Name"
 }

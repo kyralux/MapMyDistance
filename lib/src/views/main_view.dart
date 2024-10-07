@@ -2,7 +2,6 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-//import 'dart:math' show cos, sqrt, asin;
 
 import 'package:percent_indicator/percent_indicator.dart';
 
@@ -108,14 +107,13 @@ class _GoalListViewState extends State<GoalListView> {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         FloatingActionButton(
-          onPressed: () => showWorkoutPopup(context, null),
-          heroTag: 'addWorkoutButton',
-          backgroundColor: Theme.of(context).colorScheme.secondary,
-          child: Icon(
-            Icons.add,
-            color: Theme.of(context).colorScheme.onSecondary,
-          ),
-        ),
+            onPressed: () => showWorkoutPopup(context, null),
+            heroTag: 'addWorkoutButton',
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            child: Icon(
+              Icons.add,
+              color: Theme.of(context).colorScheme.onSecondary,
+            ))
       ],
     );
   }
@@ -201,7 +199,6 @@ class _GoalListViewState extends State<GoalListView> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
@@ -227,42 +224,6 @@ class _GoalListViewState extends State<GoalListView> {
       ),
     );
   }
-
-  // Widget buildHeader() {
-  //   return Stack(
-  //     children: [
-  //       Container(
-  //         height: MediaQuery.of(context).size.height * 0.24,
-  //         decoration: BoxDecoration(
-  //           boxShadow: [
-  //             BoxShadow(
-  //                 color: Colors.grey.shade600, spreadRadius: 1, blurRadius: 15)
-  //           ],
-  //           color: Theme.of(context).colorScheme.primary,
-  //           borderRadius: const BorderRadius.vertical(
-  //             bottom: Radius.circular(50),
-  //           ),
-  //         ),
-  //       ),
-  //       Column(
-  //         children: [
-  //           const SizedBox(
-  //             height: 40,
-  //           ),
-  //           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-  //             Text("Your Goals",
-  //                 style: Theme.of(context).textTheme.headlineLarge),
-  //             IconButton(
-  //                 icon: const Icon(Icons.settings),
-  //                 onPressed: () {
-  //                   Navigator.of(context).pop();
-  //                 })
-  //           ])
-  //         ],
-  //       ),
-  //     ],
-  //   );
-  // }
 
   Widget _buildGoalCard(BuildContext context) {
     return Flexible(
@@ -383,153 +344,195 @@ class _GoalListViewState extends State<GoalListView> {
         TextEditingController(text: goal?.name);
     TextEditingController startPositionController = TextEditingController();
     TextEditingController endPositionController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(builder: (context, StateSetter setState) {
           return AlertDialog(
             title: Text(AppLocalizations.of(context)!.newGoalTitle),
-            content: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                    controller: goalController,
-                    decoration: InputDecoration(
-                        hintText: AppLocalizations.of(context)!.newGoalName)),
-                Row(children: [
-                  Expanded(
-                      child: TextField(
-                          controller: startPositionController,
-                          decoration: InputDecoration(
-                              hintText:
-                                  AppLocalizations.of(context)!.newGoaStart))),
-                  FilledButton(
-                    onPressed: () async {
-                      selectedLocationStart = await showLocationPicker(context,
-                          AppLocalizations.of(context)!.locationPickerStart);
-                      if (selectedLocationStart != null) {
-                        startPositionController.text =
-                            selectedLocationStart.toString();
-                      }
-                      if (selectedLocationEnd != null) {
-                        setState(() {
-                          calculatedDistance = calculateDistance(
-                              selectedLocationStart?.latitude,
-                              selectedLocationStart?.longitude,
-                              selectedLocationEnd?.latitude,
-                              selectedLocationEnd?.longitude);
-                        });
-                      }
-                    },
-                    child: Icon(
-                      Icons.gps_fixed,
-                      color: Theme.of(context).colorScheme.onSecondary,
-                    ),
-                  )
-                ]),
-                Row(children: [
-                  Expanded(
-                      child: TextField(
-                          controller: endPositionController,
-                          decoration: InputDecoration(
-                              hintText: AppLocalizations.of(context)!
-                                  .locationPickerEnd))),
-                  FilledButton(
-                    onPressed: () async {
-                      selectedLocationEnd = await showLocationPicker(context,
-                          AppLocalizations.of(context)!.locationPickerEnd);
-                      if (selectedLocationEnd != null) {
-                        endPositionController.text =
-                            selectedLocationEnd.toString();
-                        if (selectedLocationStart != null) {
-                          setState(() {
-                            calculatedDistance = calculateDistance(
-                                selectedLocationStart?.latitude,
-                                selectedLocationStart?.longitude,
-                                selectedLocationEnd?.latitude,
-                                selectedLocationEnd?.longitude);
-                          });
+            content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: goalController,
+                      decoration: InputDecoration(
+                          hintText: AppLocalizations.of(context)!.newGoalName),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return AppLocalizations.of(context)!.newGoalName;
                         }
-                      }
-                    },
-                    child: Icon(
-                      Icons.gps_fixed,
-                      color: Theme.of(context).colorScheme.onSecondary,
+                        if (value.length > 100) {
+                          return AppLocalizations.of(context)!
+                              .errorGoalNameLong;
+                        }
+
+                        return null;
+                      },
                     ),
-                  ),
-                ]),
-                const SizedBox(
-                  height: 50,
-                ),
-                Text(AppLocalizations.of(context)!.newGoaDistance,
-                    style: Theme.of(context).textTheme.bodyMedium),
-                const SizedBox(
-                  height: 10,
-                ),
-                Card(
-                    color: Theme.of(context).colorScheme.secondary,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Text(
-                          "${double.parse((calculatedDistance).toStringAsFixed(2))} $unit",
-                          style: Theme.of(context).textTheme.bodyMedium),
-                    )),
-              ],
-            ),
+                    Row(children: [
+                      Expanded(
+                          child: TextFormField(
+                              readOnly: true,
+                              controller: startPositionController,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return AppLocalizations.of(context)!
+                                      .newGoaStart;
+                                }
+                                return null;
+                              },
+                              decoration: InputDecoration(
+                                  hintText: AppLocalizations.of(context)!
+                                      .newGoaStart))),
+                      FilledButton(
+                        onPressed: () async {
+                          selectedLocationStart = await showLocationPicker(
+                              context,
+                              AppLocalizations.of(context)!
+                                  .locationPickerStart);
+                          if (selectedLocationStart != null) {
+                            startPositionController.text =
+                                selectedLocationStart.toString();
+                          }
+                          if (selectedLocationEnd != null) {
+                            setState(() {
+                              calculatedDistance = calculateDistance(
+                                  selectedLocationStart?.latitude,
+                                  selectedLocationStart?.longitude,
+                                  selectedLocationEnd?.latitude,
+                                  selectedLocationEnd?.longitude);
+                            });
+                          }
+                        },
+                        style: ButtonStyle(
+                            backgroundColor: WidgetStatePropertyAll(
+                                Theme.of(context).colorScheme.secondary)),
+                        child: Icon(
+                          Icons.add_location,
+                          color: Theme.of(context).colorScheme.onSecondary,
+                        ),
+                      )
+                    ]),
+                    Row(children: [
+                      Expanded(
+                          child: TextFormField(
+                              readOnly: true,
+                              controller: endPositionController,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return AppLocalizations.of(context)!
+                                      .newGoalEnde;
+                                }
+                                return null;
+                              },
+                              decoration: InputDecoration(
+                                  hintText: AppLocalizations.of(context)!
+                                      .locationPickerEnd))),
+                      FilledButton(
+                        onPressed: () async {
+                          selectedLocationEnd = await showLocationPicker(
+                              context,
+                              AppLocalizations.of(context)!.locationPickerEnd);
+                          if (selectedLocationEnd != null) {
+                            endPositionController.text =
+                                selectedLocationEnd.toString();
+                            if (selectedLocationStart != null) {
+                              setState(() {
+                                calculatedDistance = calculateDistance(
+                                    selectedLocationStart?.latitude,
+                                    selectedLocationStart?.longitude,
+                                    selectedLocationEnd?.latitude,
+                                    selectedLocationEnd?.longitude);
+                              });
+                            }
+                          }
+                        },
+                        style: ButtonStyle(
+                            backgroundColor: WidgetStatePropertyAll(
+                                Theme.of(context).colorScheme.secondary)),
+                        child: Icon(
+                          Icons.add_location,
+                          color: Theme.of(context).colorScheme.onSecondary,
+                        ),
+                      ),
+                    ]),
+                    const SizedBox(
+                      height: 50,
+                    ),
+                    Text(AppLocalizations.of(context)!.newGoaDistance,
+                        style: Theme.of(context).textTheme.bodyMedium),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Card(
+                        color: Theme.of(context).colorScheme.secondary,
+                        child: Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: Text(
+                              "${double.parse((calculatedDistance).toStringAsFixed(2))} $unit",
+                              style: Theme.of(context).textTheme.bodyMedium),
+                        )),
+                  ],
+                )),
             actions: [
-              Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                FilledButton(
-                  style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.all(
-                          Color.fromARGB(255, 223, 223, 223))),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(AppLocalizations.of(context)!.cancel,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium!
-                              .copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface))),
-                ),
-                FilledButton(
-                  style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.all(
-                          Theme.of(context).colorScheme.secondary)),
-                  onPressed: () {
-                    if (selectedLocationEnd != null &&
-                        selectedLocationStart != null) {
-                      addGoal(
-                          goalController.text,
-                          "",
-                          selectedLocationStart!.latitude,
-                          selectedLocationStart!.longitude,
-                          selectedLocationEnd!.latitude,
-                          selectedLocationEnd!.longitude,
-                          false,
-                          calculatedDistance,
-                          0.0);
-                    }
-                    calculatedDistance = 0;
-                    Navigator.of(context).pop();
-                  },
-                  child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(AppLocalizations.of(context)!.save,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium!
-                              .copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface))),
-                ),
-              ])
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      FilledButton(
+                          style: ButtonStyle(
+                              backgroundColor: WidgetStateProperty.all(
+                                  Color.fromARGB(255, 223, 223, 223))),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(AppLocalizations.of(context)!.cancel,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium!
+                                  .copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface))),
+                      FilledButton(
+                          style: ButtonStyle(
+                              backgroundColor: WidgetStateProperty.all(
+                                  Theme.of(context).colorScheme.secondary)),
+                          onPressed: () {
+                            if (formKey.currentState?.validate() ?? false) {
+                              if (selectedLocationEnd != null &&
+                                  selectedLocationStart != null) {
+                                addGoal(
+                                    goalController.text,
+                                    "",
+                                    selectedLocationStart!.latitude,
+                                    selectedLocationStart!.longitude,
+                                    selectedLocationEnd!.latitude,
+                                    selectedLocationEnd!.longitude,
+                                    false,
+                                    calculatedDistance,
+                                    0.0);
+                                calculatedDistance = 0;
+                                Navigator.of(context).pop();
+                              }
+                            }
+                          },
+                          child: Text(AppLocalizations.of(context)!.save,
+                              maxLines: 1,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium!
+                                  .copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface))),
+                    ]),
+              )
             ],
           );
         });
@@ -548,30 +551,17 @@ class _GoalListViewState extends State<GoalListView> {
           title: Text(title),
           content: SizedBox(
               width: double.maxFinite,
-              height: 400,
               child: Stack(
                 children: [
                   getMap(
-                      LatLng(goallist[curGoalIndex].latStart,
-                          goallist[curGoalIndex].longStart),
+                      goallist.isNotEmpty
+                          ? LatLng(goallist[curGoalIndex].latStart,
+                              goallist[curGoalIndex].longStart)
+                          : const LatLng(
+                              49.843, 9.902056), //center of EU apparently,
                       List<Polyline>.empty(),
                       List<Marker>.empty(),
                       _mapControllerDialog),
-                  // FlutterMap(
-                  //   mapController: _mapControllerDialog,
-                  //   options: MapOptions(
-                  //     initialCenter: const LatLng(51.435146, 6.762692),
-                  //     initialZoom: zoomLevel,
-                  //   ),
-                  //   children: [
-                  //     TileLayer(
-                  //       urlTemplate:
-                  //           'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  //       userAgentPackageName:
-                  //           'dev.fleaflet.flutter_map.example',
-                  //     )
-                  //   ],
-                  // ),
                   const Center(
                     child: Icon(
                       Icons.location_pin,
@@ -582,24 +572,37 @@ class _GoalListViewState extends State<GoalListView> {
                 ],
               )),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                AppLocalizations.of(context)!.cancel,
-                style: Theme.of(context).textTheme.bodyMedium,
+            FittedBox(
+              child: Row(
+                children: [
+                  FilledButton(
+                    style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.all(
+                            Color.fromARGB(255, 223, 223, 223))),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      AppLocalizations.of(context)!.cancel,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                  FilledButton(
+                    style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.all(
+                            Theme.of(context).colorScheme.secondary)),
+                    onPressed: () {
+                      Navigator.of(context)
+                          .pop(_mapControllerDialog.camera.center);
+                    },
+                    child: Text(
+                      AppLocalizations.of(context)!.save,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(_mapControllerDialog.camera.center);
-              },
-              child: Text(
-                AppLocalizations.of(context)!.save,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
+            )
           ],
         );
       },
@@ -644,54 +647,38 @@ class _GoalListViewState extends State<GoalListView> {
                 ]),
               ])),
           actions: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-              FilledButton(
-                style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(
-                        Color.fromARGB(255, 223, 223, 223))),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text(AppLocalizations.of(context)!.cancel,
-                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface)),
-              ),
-              FilledButton(
-                style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(
-                        Theme.of(context).colorScheme.secondary)),
-                onPressed: () {
-                  if (formKey.currentState?.validate() ?? false) {
-                    setState(() {
-                      addWorkout(double.parse(distanceController.text));
+            FittedBox(
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                  FilledButton(
+                    style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.all(
+                            Color.fromARGB(255, 223, 223, 223))),
+                    onPressed: () {
                       Navigator.of(context).pop();
-                    });
-                  }
-                },
-                child: Text(AppLocalizations.of(context)!.save,
-                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface)),
-              )
-            ]),
-            // TextButton(
-            //   onPressed: () {
-            //     Navigator.of(context).pop();
-            //   },
-            //   child: Text(AppLocalizations.of(context)!.cancel,
-            //       style: Theme.of(context).textTheme.bodyMedium),
-            // ),
-            // TextButton(
-            //   onPressed: () {
-            //     if (formKey.currentState?.validate() ?? false) {
-            //       setState(() {
-            //         addWorkout(double.parse(distanceController.text));
-            //         Navigator.of(context).pop();
-            //       });
-            //     }
-            //   },
-            //   child: Text(AppLocalizations.of(context)!.save,
-            //       style: Theme.of(context).textTheme.bodyMedium),
-            // ),
+                    },
+                    child: Text(AppLocalizations.of(context)!.cancel,
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface)),
+                  ),
+                  FilledButton(
+                    style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.all(
+                            Theme.of(context).colorScheme.secondary)),
+                    onPressed: () {
+                      if (formKey.currentState?.validate() ?? false) {
+                        setState(() {
+                          addWorkout(double.parse(distanceController.text));
+                          Navigator.of(context).pop();
+                        });
+                      }
+                    },
+                    child: Text(AppLocalizations.of(context)!.save,
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface)),
+                  )
+                ])),
           ],
         );
       },
@@ -871,24 +858,19 @@ class _GoalListViewState extends State<GoalListView> {
 }
 
 // slower
-// map usability improvement: erst später drehen,
-// restore button um ma wieder richtig auszurichten? oder rotaten komplett entfernen?
 // anderes map dingens probieren?
-// schön machen
-// multilanguage https://docs.flutter.dev/ui/accessibility-and-internationalization/internationalization (1-2h Arbeit)
 
 // ?
 // in textcontrolling field nicht latlng() printen
 // weite wege, die schräg sind da läuft unser user icon vom weg runter
 // 
 // validierungen und nur digits und son kram für felder, exception funsies
-// bei goal hinzufügen overflowed das fenster
+//
 // splash screen adden
 // now:   
 /// 
-/// gelb wird nicht gemalt nach dem adden
-/// es gibt keinen settings button beim empty goals screen
 /// bar prozent ist nicht mittig
 /// 
 /// add popup when goal is reached
-/// validate input 
+/// komma und punkt je nach sprache?
+/// 
