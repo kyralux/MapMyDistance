@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:intl/intl.dart';
 import 'package:mapgoal/src/data/goal.dart';
 
 import 'package:sqflite/sqflite.dart';
@@ -56,6 +57,7 @@ class DatabaseHelper {
     List<Map<String, Object?>> goalMap =
         await db.query('goals', where: 'goalId = ?', whereArgs: [id]);
     var tmp = goalMap.first;
+    NumberFormat f = NumberFormat.decimalPattern("de_de");
 
     return Goal(
         id: int.parse(tmp['id'].toString()),
@@ -66,8 +68,8 @@ class DatabaseHelper {
         latEnd: double.parse(tmp['latEnd'].toString()),
         longEnd: double.parse(tmp['longEnd'].toString()),
         finished: bool.parse(tmp['finished'].toString()),
-        totalDistance: double.parse(tmp['totalDistance'].toString()),
-        curDistance: double.parse(tmp['curDistance'].toString()));
+        totalDistance: f.parse(tmp['totalDistance'].toString()).toDouble(),
+        curDistance: f.parse(tmp['curDistance'].toString()).toDouble());
   }
 
   static Future<List<Goal>> getGoals() async {

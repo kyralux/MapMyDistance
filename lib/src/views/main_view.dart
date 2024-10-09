@@ -1,6 +1,7 @@
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:percent_indicator/percent_indicator.dart';
@@ -29,10 +30,11 @@ class _GoalListViewState extends State<GoalListView> {
   double zoomLevel = 5.0;
   double calculatedDistance = 0.0;
   String unit = "km";
+  late NumberFormat f = NumberFormat.decimalPattern("en_en");
 
   @override
   void initState() {
-    loadGoalList();
+    loadGoalList(context);
     super.initState();
   }
 
@@ -45,6 +47,8 @@ class _GoalListViewState extends State<GoalListView> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    f = NumberFormat.decimalPattern(locale.toString());
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -157,8 +161,10 @@ class _GoalListViewState extends State<GoalListView> {
         LinearPercentIndicator(
           padding: const EdgeInsets.all(0),
           lineHeight: 30.0,
-          percent: goallist[curGoalIndex].curDistance /
-              goallist[curGoalIndex].totalDistance,
+          percent: evalFinished(goallist[curGoalIndex])
+              ? 1.0
+              : goallist[curGoalIndex].curDistance /
+                  goallist[curGoalIndex].totalDistance,
           backgroundColor: Colors.white,
           progressColor: Colors.transparent,
           animation: true,
@@ -184,7 +190,7 @@ class _GoalListViewState extends State<GoalListView> {
         ),
         Center(
             child: Text(
-          '${(goallist[curGoalIndex].curDistance / goallist[curGoalIndex].totalDistance * 100).toStringAsFixed(1)}%',
+          '${formatNumber(goallist[curGoalIndex].curDistance / goallist[curGoalIndex].totalDistance * 100)}%',
           style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
@@ -193,6 +199,10 @@ class _GoalListViewState extends State<GoalListView> {
         )),
       ],
     );
+  }
+
+  String formatNumber(double num) {
+    return f.format(num);
   }
 
   Widget _buildEmptyView(BuildContext context) {
@@ -247,7 +257,7 @@ class _GoalListViewState extends State<GoalListView> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      getDropDownRow(),
+                      getDropDownRow(context),
                       getMap(
                           LatLng(goallist[curGoalIndex].latStart,
                               goallist[curGoalIndex].longStart),
@@ -259,7 +269,7 @@ class _GoalListViewState extends State<GoalListView> {
                         child: getProgressBar(),
                       ),
                       Text(
-                        "${goallist[curGoalIndex].curDistance} / ${double.parse((goallist[curGoalIndex].totalDistance - goallist[curGoalIndex].curDistance).toStringAsFixed(2))} $unit",
+                        "${formatNumber(goallist[curGoalIndex].curDistance)} / ${formatNumber(goallist[curGoalIndex].totalDistance)} $unit",
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge,
                       )
@@ -272,7 +282,7 @@ class _GoalListViewState extends State<GoalListView> {
     );
   }
 
-  void updateMap(Goal? newValue) {
+  void updateMap(BuildContext context, Goal? newValue) {
     markers.clear();
     curGoalIndex = goallist.indexWhere((goal) => goal.id == newValue!.id);
     LatLng coordinates = calculateUserPosition(goallist[curGoalIndex]);
@@ -351,133 +361,136 @@ class _GoalListViewState extends State<GoalListView> {
         return StatefulBuilder(builder: (context, StateSetter setState) {
           return AlertDialog(
             title: Text(AppLocalizations.of(context)!.newGoalTitle),
-            content: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: goalController,
-                      decoration: InputDecoration(
-                          hintText: AppLocalizations.of(context)!.newGoalName),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppLocalizations.of(context)!.newGoalName;
-                        }
-                        if (value.length > 100) {
-                          return AppLocalizations.of(context)!
-                              .errorGoalNameLong;
-                        }
-
-                        return null;
-                      },
-                    ),
-                    Row(children: [
-                      Expanded(
-                          child: TextFormField(
-                              readOnly: true,
-                              controller: startPositionController,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return AppLocalizations.of(context)!
-                                      .newGoaStart;
-                                }
-                                return null;
-                              },
-                              decoration: InputDecoration(
-                                  hintText: AppLocalizations.of(context)!
-                                      .newGoaStart))),
-                      FilledButton(
-                        onPressed: () async {
-                          selectedLocationStart = await showLocationPicker(
-                              context,
-                              AppLocalizations.of(context)!
-                                  .locationPickerStart);
-                          if (selectedLocationStart != null) {
-                            startPositionController.text =
-                                selectedLocationStart.toString();
-                          }
-                          if (selectedLocationEnd != null) {
-                            setState(() {
-                              calculatedDistance = calculateDistance(
-                                  selectedLocationStart?.latitude,
-                                  selectedLocationStart?.longitude,
-                                  selectedLocationEnd?.latitude,
-                                  selectedLocationEnd?.longitude);
-                            });
-                          }
-                        },
-                        style: ButtonStyle(
-                            backgroundColor: WidgetStatePropertyAll(
-                                Theme.of(context).colorScheme.secondary)),
-                        child: Icon(
-                          Icons.add_location,
-                          color: Theme.of(context).colorScheme.onSecondary,
-                        ),
-                      )
-                    ]),
-                    Row(children: [
-                      Expanded(
-                          child: TextFormField(
-                              readOnly: true,
-                              controller: endPositionController,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return AppLocalizations.of(context)!
-                                      .newGoalEnde;
-                                }
-                                return null;
-                              },
-                              decoration: InputDecoration(
-                                  hintText: AppLocalizations.of(context)!
-                                      .locationPickerEnd))),
-                      FilledButton(
-                        onPressed: () async {
-                          selectedLocationEnd = await showLocationPicker(
-                              context,
-                              AppLocalizations.of(context)!.locationPickerEnd);
-                          if (selectedLocationEnd != null) {
-                            endPositionController.text =
-                                selectedLocationEnd.toString();
-                            if (selectedLocationStart != null) {
-                              setState(() {
-                                calculatedDistance = calculateDistance(
-                                    selectedLocationStart?.latitude,
-                                    selectedLocationStart?.longitude,
-                                    selectedLocationEnd?.latitude,
-                                    selectedLocationEnd?.longitude);
-                              });
+            content: SingleChildScrollView(
+                child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: goalController,
+                          decoration: InputDecoration(
+                              hintText:
+                                  AppLocalizations.of(context)!.newGoalName),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return AppLocalizations.of(context)!.newGoalName;
                             }
-                          }
-                        },
-                        style: ButtonStyle(
-                            backgroundColor: WidgetStatePropertyAll(
-                                Theme.of(context).colorScheme.secondary)),
-                        child: Icon(
-                          Icons.add_location,
-                          color: Theme.of(context).colorScheme.onSecondary,
+                            if (value.length > 100) {
+                              return AppLocalizations.of(context)!
+                                  .errorGoalNameLong;
+                            }
+                            return null;
+                          },
                         ),
-                      ),
-                    ]),
-                    const SizedBox(
-                      height: 50,
-                    ),
-                    Text(AppLocalizations.of(context)!.newGoaDistance,
-                        style: Theme.of(context).textTheme.bodyMedium),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Card(
-                        color: Theme.of(context).colorScheme.secondary,
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Text(
-                              "${double.parse((calculatedDistance).toStringAsFixed(2))} $unit",
-                              style: Theme.of(context).textTheme.bodyMedium),
-                        )),
-                  ],
-                )),
+                        Row(children: [
+                          Expanded(
+                              child: TextFormField(
+                                  readOnly: true,
+                                  controller: startPositionController,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return AppLocalizations.of(context)!
+                                          .newGoaStart;
+                                    }
+                                    return null;
+                                  },
+                                  decoration: InputDecoration(
+                                      hintText: AppLocalizations.of(context)!
+                                          .newGoaStart))),
+                          FilledButton(
+                            onPressed: () async {
+                              selectedLocationStart = await showLocationPicker(
+                                  context,
+                                  AppLocalizations.of(context)!
+                                      .locationPickerStart);
+                              if (selectedLocationStart != null) {
+                                startPositionController.text =
+                                    selectedLocationStart.toString();
+                              }
+                              if (selectedLocationEnd != null) {
+                                setState(() {
+                                  calculatedDistance = calculateDistance(
+                                      selectedLocationStart?.latitude,
+                                      selectedLocationStart?.longitude,
+                                      selectedLocationEnd?.latitude,
+                                      selectedLocationEnd?.longitude);
+                                });
+                              }
+                            },
+                            style: ButtonStyle(
+                                backgroundColor: WidgetStatePropertyAll(
+                                    Theme.of(context).colorScheme.secondary)),
+                            child: Icon(
+                              Icons.add_location,
+                              color: Theme.of(context).colorScheme.onSecondary,
+                            ),
+                          )
+                        ]),
+                        Row(children: [
+                          Expanded(
+                              child: TextFormField(
+                                  readOnly: true,
+                                  controller: endPositionController,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return AppLocalizations.of(context)!
+                                          .newGoalEnde;
+                                    }
+                                    return null;
+                                  },
+                                  decoration: InputDecoration(
+                                      hintText: AppLocalizations.of(context)!
+                                          .locationPickerEnd))),
+                          FilledButton(
+                            onPressed: () async {
+                              selectedLocationEnd = await showLocationPicker(
+                                  context,
+                                  AppLocalizations.of(context)!
+                                      .locationPickerEnd);
+                              if (selectedLocationEnd != null) {
+                                endPositionController.text =
+                                    selectedLocationEnd.toString();
+                                if (selectedLocationStart != null) {
+                                  setState(() {
+                                    calculatedDistance = calculateDistance(
+                                        selectedLocationStart?.latitude,
+                                        selectedLocationStart?.longitude,
+                                        selectedLocationEnd?.latitude,
+                                        selectedLocationEnd?.longitude);
+                                  });
+                                }
+                              }
+                            },
+                            style: ButtonStyle(
+                                backgroundColor: WidgetStatePropertyAll(
+                                    Theme.of(context).colorScheme.secondary)),
+                            child: Icon(
+                              Icons.add_location,
+                              color: Theme.of(context).colorScheme.onSecondary,
+                            ),
+                          ),
+                        ]),
+                        const SizedBox(
+                          height: 50,
+                        ),
+                        Text(AppLocalizations.of(context)!.newGoaDistance,
+                            style: Theme.of(context).textTheme.bodyMedium),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Card(
+                            color: Theme.of(context).colorScheme.secondary,
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Text(
+                                  "${f.format(calculatedDistance)} $unit",
+                                  style:
+                                      Theme.of(context).textTheme.bodyMedium),
+                            )),
+                      ],
+                    ))),
             actions: [
               FittedBox(
                 fit: BoxFit.scaleDown,
@@ -508,6 +521,7 @@ class _GoalListViewState extends State<GoalListView> {
                               if (selectedLocationEnd != null &&
                                   selectedLocationStart != null) {
                                 addGoal(
+                                    context,
                                     goalController.text,
                                     "",
                                     selectedLocationStart!.latitude,
@@ -618,34 +632,43 @@ class _GoalListViewState extends State<GoalListView> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(AppLocalizations.of(context)!.distanceTitle),
-          content: Form(
-              key: formKey,
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text(AppLocalizations.of(context)!.distanceDescription),
-                const SizedBox(height: 10),
-                Row(children: [
-                  Expanded(
-                      child: TextFormField(
-                    controller: distanceController,
-                    decoration: InputDecoration(
-                        hintText: AppLocalizations.of(context)!.distanceHint,
-                        border: OutlineInputBorder()),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return AppLocalizations.of(context)!.distanceHint;
-                      }
-                      final doubleValue = double.tryParse(value);
-                      if (doubleValue == null) {
-                        return AppLocalizations.of(context)!.errorValidNumber;
-                      }
-                      return null;
-                    },
-                  )),
-                  const SizedBox(width: 10),
-                  Text(unit)
-                ]),
-              ])),
+          content: SingleChildScrollView(
+              child: Form(
+                  key: formKey,
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text(AppLocalizations.of(context)!.distanceDescription),
+                    const SizedBox(height: 10),
+                    Row(children: [
+                      Expanded(
+                          child: TextFormField(
+                        controller: distanceController,
+                        decoration: InputDecoration(
+                            hintText:
+                                AppLocalizations.of(context)!.distanceHint,
+                            border: OutlineInputBorder()),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return AppLocalizations.of(context)!.distanceHint;
+                          }
+                          try {
+                            num? doubleValue = f.parse(value);
+                            if (doubleValue == null) {
+                              return AppLocalizations.of(context)!
+                                  .errorValidNumber;
+                            }
+                          } catch (e) {
+                            return AppLocalizations.of(context)!
+                                .errorValidNumber;
+                          }
+
+                          return null;
+                        },
+                      )),
+                      const SizedBox(width: 10),
+                      Text(unit)
+                    ]),
+                  ]))),
           actions: [
             FittedBox(
                 child: Row(
@@ -669,8 +692,12 @@ class _GoalListViewState extends State<GoalListView> {
                     onPressed: () {
                       if (formKey.currentState?.validate() ?? false) {
                         setState(() {
-                          addWorkout(double.parse(distanceController.text));
+                          addWorkout(context,
+                              f.parse(distanceController.text).toDouble());
                           Navigator.of(context).pop();
+                          if (evalFinished(goallist[curGoalIndex])) {
+                            getCongratulationsPopup(context);
+                          }
                         });
                       }
                     },
@@ -685,13 +712,56 @@ class _GoalListViewState extends State<GoalListView> {
     );
   }
 
-  void addWorkout(double distance) {
+  void getCongratulationsPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+            title: Text(AppLocalizations.of(context)!.congratsTitle),
+            content: Column(mainAxisSize: MainAxisSize.min, children: [
+              Icon(
+                Icons.celebration,
+                color: Theme.of(context).colorScheme.secondary,
+                size: MediaQuery.of(context).size.width * 0.4,
+              ),
+              Text(AppLocalizations.of(context)!.congratsDesc)
+            ]),
+            actions: [
+              Center(
+                  child: FilledButton(
+                      style: ButtonStyle(
+                          backgroundColor: WidgetStateProperty.all(
+                              const Color.fromARGB(255, 223, 223, 223))),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(AppLocalizations.of(context)!.okay,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium!
+                              .copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface))))
+            ]);
+      },
+    );
+  }
+
+  void addWorkout(BuildContext context, double distance) {
     goallist[curGoalIndex].curDistance += distance;
-    updateUserMarker();
+    updateUserMarker(context);
     DatabaseHelper.editGoal(goallist[curGoalIndex]);
   }
 
-  void updateUserMarker() {
+  bool evalFinished(Goal goal) {
+    if (goal.curDistance >= goal.totalDistance) {
+      return true;
+    }
+    return false;
+  }
+
+  void updateUserMarker(BuildContext context) {
     LatLng coordinates = calculateUserPosition(goallist[curGoalIndex]);
     markers.removeLast();
     markers.add(Marker(
@@ -705,18 +775,19 @@ class _GoalListViewState extends State<GoalListView> {
     _mapController.move(coordinates, _mapController.camera.zoom);
   }
 
-  Future<void> loadGoalList() async {
+  Future<void> loadGoalList(BuildContext context) async {
     List<Goal> v = await DatabaseHelper.getGoals();
 
     setState(() {
       if (v.isNotEmpty) {
         goallist = v;
-        updateMap(goallist[curGoalIndex]);
+        updateMap(context, goallist[curGoalIndex]);
       }
     });
   }
 
   void addGoal(
+      BuildContext context,
       String name,
       String description,
       double latStart,
@@ -742,14 +813,14 @@ class _GoalListViewState extends State<GoalListView> {
     setState(() {
       goallist.add(goal);
     });
-    updateMap(goal);
+    updateMap(context, goal);
   }
 
-  void deleteGoal(Goal goal) {
+  void deleteGoal(BuildContext context, Goal goal) {
     setState(() {
       goallist.removeAt(curGoalIndex);
       curGoalIndex = 0;
-      if (goallist.isNotEmpty) updateMap(goallist[curGoalIndex]);
+      if (goallist.isNotEmpty) updateMap(context, goallist[curGoalIndex]);
       DatabaseHelper.deleteGoal(goal.id!);
     });
   }
@@ -767,41 +838,62 @@ class _GoalListViewState extends State<GoalListView> {
                 Text(AppLocalizations.of(context)!.deletionDescription,
                     style: Theme.of(context).textTheme.bodyMedium),
                 const SizedBox(height: 10),
-                Text(goal.name, style: Theme.of(context).textTheme.bodyLarge)
+                Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                        border: Border.all(
+                            width: 2,
+                            color: Theme.of(context).colorScheme.error)),
+                    child: Text(goal.name,
+                        style: Theme.of(context).textTheme.bodyLarge))
               ]),
           actions: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-              FilledButton(
-                style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(
-                        Color.fromARGB(255, 223, 223, 223))),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text(AppLocalizations.of(context)!.cancel,
-                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface)),
-              ),
-              FilledButton(
-                style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(
-                        Theme.of(context).colorScheme.error)),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  deleteGoal(goal);
-                },
-                child: Text(AppLocalizations.of(context)!.deletionSubmit,
-                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        color: Theme.of(context).colorScheme.onError)),
-              ),
-            ])
+            FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      FilledButton(
+                        style: ButtonStyle(
+                            backgroundColor: WidgetStateProperty.all(
+                                Color.fromARGB(255, 223, 223, 223))),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Text(AppLocalizations.of(context)!.cancel,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium!
+                                .copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface)),
+                      ),
+                      FilledButton(
+                        style: ButtonStyle(
+                            backgroundColor: WidgetStateProperty.all(
+                                Theme.of(context).colorScheme.error)),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          deleteGoal(context, goal);
+                        },
+                        child: Text(
+                            AppLocalizations.of(context)!.deletionSubmit,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium!
+                                .copyWith(
+                                    color:
+                                        Theme.of(context).colorScheme.onError)),
+                      ),
+                    ]))
           ],
         );
       },
     );
   }
 
-  Widget getDropDownRow() {
+  Widget getDropDownRow(BuildContext context) {
     return Container(
         color: Theme.of(context).colorScheme.secondary,
         child: Row(
@@ -828,7 +920,7 @@ class _GoalListViewState extends State<GoalListView> {
                   }).toList(),
                   onChanged: (Goal? newGoal) {
                     setState(() {
-                      updateMap(newGoal);
+                      updateMap(context, newGoal);
                     });
                   },
                 )),
@@ -857,20 +949,27 @@ class _GoalListViewState extends State<GoalListView> {
   }
 }
 
-// slower
-// anderes map dingens probieren?
-
-// ?
-// in textcontrolling field nicht latlng() printen
-// weite wege, die schräg sind da läuft unser user icon vom weg runter
-// 
-// validierungen und nur digits und son kram für felder, exception funsies
-//
-// splash screen adden
-// now:   
-/// 
+/// weite wege, die schräg sind da läuft unser user icon vom weg runter
 /// bar prozent ist nicht mittig
 /// 
-/// add popup when goal is reached
-/// komma und punkt je nach sprache?
+/// 1.0:
 /// 
+/// Overall:
+/// - make popups pretty
+/// - make button style
+/// - add congratulations popup when its finished
+/// 
+/// locale: *
+/// - punkt und komma fun - bäääâh
+/// 
+/// logic:
+/// - fix schräg issues
+/// - fix issue with moving the map after something is updated
+/// 
+/// Settings:
+/// - add dark theme
+/// - add km/miles
+/// 
+/// 
+/// 
+/// wenn ich bei distanz 1.0 hinzufüge ist alles weird, komma ist jetzt super

@@ -1,6 +1,7 @@
 {
   "cancel": "Abbrechen",
   "save": "Speichern",
+  "okay": "Okay",
   "emptyText": "Erstelle dein erstes Ziel",
   "newGoalTitle": "Erstelle ein Ziel",
   "newGoalName": "Name",
@@ -16,5 +17,7 @@
   "deletionSubmit": "Löschen",
   "distanceHint": "Distanz",
   "errorValidNumber": "ungültige Zahl",
-  "errorGoalNameLong": "Zu langer Name"
+  "errorGoalNameLong": "Zu langer Name",
+  "congratsTitle":"Glückwunsch!",
+  "congratsDesc": "Du hast es geschafft! Du hast dein Ziel erreicht!"
 }

@@ -29,7 +29,6 @@ class MyApp extends StatelessWidget {
             colorScheme: const ColorScheme(
                 //Color(0xFF00aedb) primary
                 //Color(0xFF00edce) sec
-
                 primary: Color.fromARGB(255, 255, 255, 255),
                 onPrimary: Colors.black,
                 secondary: Color.fromARGB(255, 54, 212, 223),
@@ -75,8 +74,6 @@ class MyApp extends StatelessWidget {
                 switch (routeSettings.name) {
                   case SettingsView.routeName:
                     return SettingsView(controller: settingsController);
-                  // case SampleItemDetailsView.routeName:
-                  //   return const SampleItemDetailsView();
                   case GoalListView.routeName:
                   default:
                     return const GoalListView();
