@@ -1,17 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:mapgoal/src/settings/settings_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// A service that stores and retrieves user settings.
-///
-/// By default, this class does not persist user settings. If you'd like to
-/// persist the user settings locally, use the shared_preferences package. If
-/// you'd like to store settings on a web server, use the http package.
 class SettingsService {
-  /// Loads the User's preferred ThemeMode from local or remote storage.
+  SharedPreferences? _prefs;
+
+  Future<void> _initPrefs() async {
+    _prefs ??= await SharedPreferences.getInstance();
+  }
+
   Future<ThemeMode> themeMode() async => ThemeMode.system;
 
-  /// Persists the user's preferred ThemeMode to local or remote storage.
-  Future<void> updateThemeMode(ThemeMode theme) async {
-    // Use the shared_preferences package to persist settings locally or the
-    // http package to persist settings over the network.
+  Future<void> updateThemeMode(ThemeMode theme) async {}
+
+  Future<DistanceUnit> distanceUnit() async {
+    await _initPrefs();
+    final unitString =
+        _prefs!.getString('distance_unit') ?? DistanceUnit.kilometers.name;
+    return DistanceUnit.values.firstWhere((e) => e.name == unitString);
+  }
+
+  Future<void> updateDistanceUnit(DistanceUnit distanceUnit) async {
+    await _initPrefs();
+    await _prefs!.setString('distance_unit', distanceUnit.name);
   }
 }
+
+
+// meine großen probleme beim programmieren
+/// neues lernen
+/// wohin mir allem? :o zb jetzt wo place ich die shared preferences?
+/// 

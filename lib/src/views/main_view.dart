@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:mapgoal/src/settings/settings_controller.dart';
 
 import 'package:percent_indicator/percent_indicator.dart';
 
@@ -13,8 +14,10 @@ import 'package:mapgoal/src/storage/database_helper.dart';
 import 'package:flutter_map_math/flutter_geo_math.dart';
 
 class GoalListView extends StatefulWidget {
-  const GoalListView({super.key});
+  const GoalListView({super.key, required this.controller});
   static const routeName = '/';
+
+  final SettingsController controller;
 
   @override
   State<GoalListView> createState() => _GoalListViewState();
@@ -34,6 +37,7 @@ class _GoalListViewState extends State<GoalListView> {
 
   @override
   void initState() {
+    unit = widget.controller.distanceUnit.name;
     loadGoalList(context);
     super.initState();
   }
@@ -73,6 +77,9 @@ class _GoalListViewState extends State<GoalListView> {
             color: Theme.of(context).colorScheme.onPrimary,
             onPressed: () {
               Navigator.restorablePushNamed(context, SettingsView.routeName);
+              setState(() {
+                unit = widget.controller.distanceUnit.name;
+              });
             },
           ),
         ],
@@ -154,6 +161,14 @@ class _GoalListViewState extends State<GoalListView> {
     return FlutterMapMath()
         .distanceBetween(lat1, lon1, lat2, lon2, "kilometers");
   }
+
+  double convertKilometerMiles(double distance) {
+    return (distance * 1000) / 1609.344;
+  }
+
+  // String formatNumber(){
+  //   if
+  // }
 
   Widget getProgressBar() {
     return Stack(
@@ -951,25 +966,25 @@ class _GoalListViewState extends State<GoalListView> {
 
 /// weite wege, die schräg sind da läuft unser user icon vom weg runter
 /// bar prozent ist nicht mittig
-/// 
+///
 /// 1.0:
-/// 
+///
 /// Overall:
 /// - make popups pretty
 /// - make button style
 /// - add congratulations popup when its finished
-/// 
+///
 /// locale: *
 /// - punkt und komma fun - bäääâh
-/// 
+///
 /// logic:
 /// - fix schräg issues
 /// - fix issue with moving the map after something is updated
-/// 
+///
 /// Settings:
 /// - add dark theme
 /// - add km/miles
-/// 
-/// 
-/// 
 /// wenn ich bei distanz 1.0 hinzufüge ist alles weird, komma ist jetzt super
+///
+/// 1.1: Settings are not permanent (shared something something)
+/// auf miles switchen ändert die einheit nicht

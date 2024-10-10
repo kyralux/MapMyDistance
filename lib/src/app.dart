@@ -76,7 +76,7 @@ class MyApp extends StatelessWidget {
                     return SettingsView(controller: settingsController);
                   case GoalListView.routeName:
                   default:
-                    return const GoalListView();
+                    return GoalListView(controller: settingsController);
                 }
               },
             );
@@ -86,3 +86,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+/// TODO: kilometer/miles change only works after changing the view

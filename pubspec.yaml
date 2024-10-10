@@ -19,6 +19,7 @@ dependencies:
   flutter_map_math: ^0.1.7
   latlong2: ^0.9.1
   percent_indicator: ^4.2.3
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
