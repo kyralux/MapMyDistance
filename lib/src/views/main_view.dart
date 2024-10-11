@@ -4,17 +4,16 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mapgoal/src/settings/settings_controller.dart';
+import 'package:mapgoal/src/util/goals.dart';
 
 import 'package:percent_indicator/percent_indicator.dart';
 
 import 'package:mapgoal/src/data/goal.dart';
+import 'package:mapgoal/src/util/map.dart';
 import 'package:mapgoal/src/settings/settings_view.dart';
 
-import 'package:mapgoal/src/storage/database_helper.dart';
-import 'package:flutter_map_math/flutter_geo_math.dart';
-
 class GoalListView extends StatefulWidget {
-  const GoalListView({super.key, required this.controller});
+  GoalListView({super.key, required this.controller});
   static const routeName = '/';
 
   final SettingsController controller;
@@ -24,28 +23,32 @@ class GoalListView extends StatefulWidget {
 }
 
 class _GoalListViewState extends State<GoalListView> {
-  List<Goal> goallist = [];
-  int curGoalIndex = 0;
-  final MapController _mapController = MapController();
-  final MapController _mapControllerDialog = MapController();
-  List<Marker> markers = [];
-  List<Polyline> polylines = [];
-  double zoomLevel = 5.0;
   double calculatedDistance = 0.0;
-  String unit = "km";
+  //String unit = "km";
   late NumberFormat f = NumberFormat.decimalPattern("en_en");
+  final MapUtils mapUtils = MapUtils();
+  GoalHandler goalHandler = GoalHandler();
+  final MapController _mapControllerDialog = MapController();
 
   @override
   void initState() {
-    unit = widget.controller.distanceUnit.name;
-    loadGoalList(context);
     super.initState();
+    //unit = widget.controller.distanceUnit.name;
+    goalHandler.loadGoalList(context);
+    if (goalHandler.goallist.isNotEmpty) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        // todo thisworks but ugly
+        mapUtils.updateMap(context, goalHandler,
+            goalHandler.goallist[goalHandler.curGoalIndex]);
+      });
+    }
+    //
   }
 
   @override
   void dispose() {
-    _mapController.dispose();
-    _mapControllerDialog.dispose();
+    //_mapController.dispose();
+    // _mapControllerDialog.dispose();
     super.dispose();
   }
 
@@ -73,15 +76,36 @@ class _GoalListViewState extends State<GoalListView> {
         backgroundColor: Theme.of(context).primaryColor,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
-            color: Theme.of(context).colorScheme.onPrimary,
-            onPressed: () {
-              Navigator.restorablePushNamed(context, SettingsView.routeName);
-              setState(() {
-                unit = widget.controller.distanceUnit.name;
-              });
-            },
-          ),
+              icon: const Icon(Icons.settings),
+              color: Theme.of(context).colorScheme.onPrimary,
+              onPressed: () async {
+                var result = await Navigator.restorablePushNamed(
+                    context, SettingsView.routeName);
+                // var result = await Navigator.pushNamed(
+                //     //restorablePushNamed(
+                //     context,
+                //     SettingsView.routeName);
+                // final result = await Navigator.pushNamed(
+                //   context,
+                //   SettingsView.routeName,
+                // );
+
+                // if (mounted && result != null) {
+                //   setState(() {
+                //     unit = (result as DistanceUnit)
+                //         .name; // whty does this get called when setting?
+                //     goalHandler.curGoal.curDistance += 0;
+                //   });
+                // }
+              }
+              // setState(() {
+              //   unit = widget.controller.distanceUnit.name;
+              //   goalHandler.curGoal.curDistance += 0;
+
+              //   /// das muss woanders hin, das wird erst ausgeführt nachdem man nochmal auf settigs gesdrückt hat
+              // });
+              //},
+              ),
         ],
       ),
       body: Container(
@@ -95,7 +119,7 @@ class _GoalListViewState extends State<GoalListView> {
             ],
           ),
         ),
-        child: goallist.isNotEmpty
+        child: goalHandler.goallist.isNotEmpty
             ? Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -109,7 +133,7 @@ class _GoalListViewState extends State<GoalListView> {
             : _buildEmptyView(context),
       ),
       floatingActionButton:
-          goallist.isNotEmpty ? _buildActionButton(context) : null,
+          goalHandler.goallist.isNotEmpty ? _buildActionButton(context) : null,
     );
   }
 
@@ -129,46 +153,12 @@ class _GoalListViewState extends State<GoalListView> {
     );
   }
 
-  LatLng calculateUserPosition(Goal curGoal) {
-    // double bearing = FlutterMapMath().bearingBetween(
-    //   curGoal.latStart,
-    //   curGoal.longStart,
-    //   curGoal.latEnd,
-    //   curGoal.longEnd,
-    // );
-
-    // LatLng destinationPoint = FlutterMapMath().destinationPoint(
-    //     curGoal.latStart,
-    //     curGoal.longStart,
-    //     curGoal.curDistance * 1000,
-    //     bearing);
-
-    double percentage = curGoal.curDistance / curGoal.totalDistance;
-    double userLat =
-        curGoal.latStart + (curGoal.latEnd - curGoal.latStart) * percentage;
-    double userLong =
-        curGoal.longStart + (curGoal.longEnd - curGoal.longStart) * percentage;
-
-    return LatLng(userLat, userLong);
+  String formatNumber(double distance) {
+    return f.format(
+        widget.controller.distanceUnit.name == DistanceUnit.miles.name
+            ? mapUtils.convertKilometerMiles(distance)
+            : distance);
   }
-
-  double calculateDistanceGoal(Goal curGoal) {
-    return FlutterMapMath().distanceBetween(curGoal.latStart, curGoal.longStart,
-        curGoal.latEnd, curGoal.longEnd, "kilometers");
-  }
-
-  double calculateDistance(lat1, lon1, lat2, lon2) {
-    return FlutterMapMath()
-        .distanceBetween(lat1, lon1, lat2, lon2, "kilometers");
-  }
-
-  double convertKilometerMiles(double distance) {
-    return (distance * 1000) / 1609.344;
-  }
-
-  // String formatNumber(){
-  //   if
-  // }
 
   Widget getProgressBar() {
     return Stack(
@@ -176,18 +166,18 @@ class _GoalListViewState extends State<GoalListView> {
         LinearPercentIndicator(
           padding: const EdgeInsets.all(0),
           lineHeight: 30.0,
-          percent: evalFinished(goallist[curGoalIndex])
+          percent: goalHandler.curGoal.evalFinished()
               ? 1.0
-              : goallist[curGoalIndex].curDistance /
-                  goallist[curGoalIndex].totalDistance,
+              : goalHandler.curGoal.curDistance /
+                  goalHandler.curGoal.totalDistance,
           backgroundColor: Colors.white,
           progressColor: Colors.transparent,
           animation: true,
         ),
         Positioned.fill(
           child: FractionallySizedBox(
-            widthFactor: goallist[curGoalIndex].curDistance /
-                goallist[curGoalIndex].totalDistance,
+            widthFactor: goalHandler.curGoal.curDistance /
+                goalHandler.curGoal.totalDistance,
             alignment: Alignment.centerLeft,
             child: Container(
               decoration: const BoxDecoration(
@@ -205,7 +195,7 @@ class _GoalListViewState extends State<GoalListView> {
         ),
         Center(
             child: Text(
-          '${formatNumber(goallist[curGoalIndex].curDistance / goallist[curGoalIndex].totalDistance * 100)}%',
+          '${goalHandler.curGoal.curDistance / goalHandler.curGoal.totalDistance * 100}%',
           style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
@@ -214,10 +204,6 @@ class _GoalListViewState extends State<GoalListView> {
         )),
       ],
     );
-  }
-
-  String formatNumber(double num) {
-    return f.format(num);
   }
 
   Widget _buildEmptyView(BuildContext context) {
@@ -273,18 +259,16 @@ class _GoalListViewState extends State<GoalListView> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       getDropDownRow(context),
-                      getMap(
-                          LatLng(goallist[curGoalIndex].latStart,
-                              goallist[curGoalIndex].longStart),
-                          polylines,
-                          markers,
-                          _mapController),
+                      mapUtils.getMap(
+                        LatLng(goalHandler.curGoal.latStart,
+                            goalHandler.curGoal.longStart),
+                      ),
                       Padding(
                         padding: const EdgeInsets.all(0),
                         child: getProgressBar(),
                       ),
                       Text(
-                        "${formatNumber(goallist[curGoalIndex].curDistance)} / ${formatNumber(goallist[curGoalIndex].totalDistance)} $unit",
+                        "${formatNumber(goalHandler.curGoal.curDistance)} / ${formatNumber(goalHandler.curGoal.totalDistance)} ${widget.controller.distanceUnit.name}",
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge,
                       )
@@ -295,71 +279,6 @@ class _GoalListViewState extends State<GoalListView> {
         ),
       ),
     );
-  }
-
-  void updateMap(BuildContext context, Goal? newValue) {
-    markers.clear();
-    curGoalIndex = goallist.indexWhere((goal) => goal.id == newValue!.id);
-    LatLng coordinates = calculateUserPosition(goallist[curGoalIndex]);
-    markers.addAll([
-      Marker(
-          point: LatLng(goallist[curGoalIndex].latStart,
-              goallist[curGoalIndex].longStart),
-          child: Icon(Icons.fiber_manual_record,
-              color: Theme.of(context).colorScheme.secondary)),
-      Marker(
-          point: LatLng(
-              goallist[curGoalIndex].latEnd, goallist[curGoalIndex].longEnd),
-          child:
-              Icon(Icons.flag, color: Theme.of(context).colorScheme.secondary)),
-      Marker(
-          point: coordinates,
-          child: const Icon(Icons.person, color: Colors.black))
-    ]);
-    polylines.clear();
-    polylines.add(Polyline(points: [
-      LatLng(goallist[curGoalIndex].latEnd, goallist[curGoalIndex].longEnd),
-      LatLng(goallist[curGoalIndex].latStart, goallist[curGoalIndex].longStart),
-    ], color: Colors.grey, strokeWidth: 4.0));
-    polylines.add(Polyline(points: [
-      LatLng(coordinates.latitude, coordinates.longitude),
-      LatLng(goallist[curGoalIndex].latStart, goallist[curGoalIndex].longStart),
-    ], color: Theme.of(context).colorScheme.tertiary, strokeWidth: 4.0));
-
-    // somehow this only works after the first loading of the app
-    //_mapController.move(coordinates, _mapController.camera.zoom);
-  }
-
-  Widget getMap(LatLng coordinates, List<Polyline> polylist,
-      List<Marker> markerlist, MapController mapController) {
-    return Flexible(
-        flex: 10,
-        child: FlutterMap(
-          mapController: mapController,
-          options: MapOptions(
-            minZoom: 1.0,
-            maxZoom: 20.0,
-            interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag),
-            initialCenter: coordinates,
-            initialZoom: validateZoomLevel(zoomLevel),
-          ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'dev.fleaflet.flutter_map.example',
-            ),
-            PolylineLayer(polylines: polylist),
-            MarkerLayer(markers: markerlist),
-          ],
-        ));
-  }
-
-  double validateZoomLevel(double zoom) {
-    if (zoom.isNaN || zoom.isInfinite || zoom < 0) {
-      return 5.0;
-    }
-    return zoom;
   }
 
   void showPopup(BuildContext context, Goal? goal) {
@@ -426,11 +345,12 @@ class _GoalListViewState extends State<GoalListView> {
                               }
                               if (selectedLocationEnd != null) {
                                 setState(() {
-                                  calculatedDistance = calculateDistance(
-                                      selectedLocationStart?.latitude,
-                                      selectedLocationStart?.longitude,
-                                      selectedLocationEnd?.latitude,
-                                      selectedLocationEnd?.longitude);
+                                  calculatedDistance =
+                                      mapUtils.calculateDistance(
+                                          selectedLocationStart?.latitude,
+                                          selectedLocationStart?.longitude,
+                                          selectedLocationEnd?.latitude,
+                                          selectedLocationEnd?.longitude);
                                 });
                               }
                             },
@@ -469,11 +389,12 @@ class _GoalListViewState extends State<GoalListView> {
                                     selectedLocationEnd.toString();
                                 if (selectedLocationStart != null) {
                                   setState(() {
-                                    calculatedDistance = calculateDistance(
-                                        selectedLocationStart?.latitude,
-                                        selectedLocationStart?.longitude,
-                                        selectedLocationEnd?.latitude,
-                                        selectedLocationEnd?.longitude);
+                                    calculatedDistance =
+                                        mapUtils.calculateDistance(
+                                            selectedLocationStart?.latitude,
+                                            selectedLocationStart?.longitude,
+                                            selectedLocationEnd?.latitude,
+                                            selectedLocationEnd?.longitude);
                                   });
                                 }
                               }
@@ -500,7 +421,7 @@ class _GoalListViewState extends State<GoalListView> {
                             child: Padding(
                               padding: const EdgeInsets.all(20.0),
                               child: Text(
-                                  "${f.format(calculatedDistance)} $unit",
+                                  "${formatNumber(calculatedDistance)} ${widget.controller.distanceUnit.name}",
                                   style:
                                       Theme.of(context).textTheme.bodyMedium),
                             )),
@@ -535,7 +456,7 @@ class _GoalListViewState extends State<GoalListView> {
                             if (formKey.currentState?.validate() ?? false) {
                               if (selectedLocationEnd != null &&
                                   selectedLocationStart != null) {
-                                addGoal(
+                                goalHandler.addGoal(
                                     context,
                                     goalController.text,
                                     "",
@@ -582,15 +503,13 @@ class _GoalListViewState extends State<GoalListView> {
               width: double.maxFinite,
               child: Stack(
                 children: [
-                  getMap(
-                      goallist.isNotEmpty
-                          ? LatLng(goallist[curGoalIndex].latStart,
-                              goallist[curGoalIndex].longStart)
-                          : const LatLng(
-                              49.843, 9.902056), //center of EU apparently,
-                      List<Polyline>.empty(),
-                      List<Marker>.empty(),
-                      _mapControllerDialog),
+                  mapUtils.getLocationPickerMap(
+                    goalHandler.goallist.isNotEmpty
+                        ? LatLng(goalHandler.curGoal.latStart,
+                            goalHandler.curGoal.longStart)
+                        : const LatLng(49.843, 9.902056),
+                    _mapControllerDialog, //center of EU apparently,
+                  ),
                   const Center(
                     child: Icon(
                       Icons.location_pin,
@@ -681,7 +600,7 @@ class _GoalListViewState extends State<GoalListView> {
                         },
                       )),
                       const SizedBox(width: 10),
-                      Text(unit)
+                      Text(widget.controller.distanceUnit.name)
                     ]),
                   ]))),
           actions: [
@@ -707,10 +626,10 @@ class _GoalListViewState extends State<GoalListView> {
                     onPressed: () {
                       if (formKey.currentState?.validate() ?? false) {
                         setState(() {
-                          addWorkout(context,
+                          goalHandler.addWorkout(context,
                               f.parse(distanceController.text).toDouble());
                           Navigator.of(context).pop();
-                          if (evalFinished(goallist[curGoalIndex])) {
+                          if (goalHandler.curGoal.evalFinished()) {
                             getCongratulationsPopup(context);
                           }
                         });
@@ -763,83 +682,6 @@ class _GoalListViewState extends State<GoalListView> {
     );
   }
 
-  void addWorkout(BuildContext context, double distance) {
-    goallist[curGoalIndex].curDistance += distance;
-    updateUserMarker(context);
-    DatabaseHelper.editGoal(goallist[curGoalIndex]);
-  }
-
-  bool evalFinished(Goal goal) {
-    if (goal.curDistance >= goal.totalDistance) {
-      return true;
-    }
-    return false;
-  }
-
-  void updateUserMarker(BuildContext context) {
-    LatLng coordinates = calculateUserPosition(goallist[curGoalIndex]);
-    markers.removeLast();
-    markers.add(Marker(
-        point: coordinates,
-        child: const Icon(Icons.person, color: Colors.black)));
-    polylines.removeLast();
-    polylines.add(Polyline(points: [
-      LatLng(coordinates.latitude, coordinates.longitude),
-      LatLng(goallist[curGoalIndex].latStart, goallist[curGoalIndex].longStart),
-    ], color: Theme.of(context).colorScheme.tertiary, strokeWidth: 4.0));
-    _mapController.move(coordinates, _mapController.camera.zoom);
-  }
-
-  Future<void> loadGoalList(BuildContext context) async {
-    List<Goal> v = await DatabaseHelper.getGoals();
-
-    setState(() {
-      if (v.isNotEmpty) {
-        goallist = v;
-        updateMap(context, goallist[curGoalIndex]);
-      }
-    });
-  }
-
-  void addGoal(
-      BuildContext context,
-      String name,
-      String description,
-      double latStart,
-      double longStart,
-      double latEnd,
-      double longEnd,
-      bool finished,
-      double totalDistance,
-      double curDistance) {
-    var goal = Goal(
-        name: name,
-        description: description,
-        latStart: latStart,
-        longStart: longStart,
-        latEnd: latEnd,
-        longEnd: longEnd,
-        finished: finished,
-        totalDistance: totalDistance,
-        curDistance: curDistance);
-
-    DatabaseHelper.insertGoal(goal);
-
-    setState(() {
-      goallist.add(goal);
-    });
-    updateMap(context, goal);
-  }
-
-  void deleteGoal(BuildContext context, Goal goal) {
-    setState(() {
-      goallist.removeAt(curGoalIndex);
-      curGoalIndex = 0;
-      if (goallist.isNotEmpty) updateMap(context, goallist[curGoalIndex]);
-      DatabaseHelper.deleteGoal(goal.id!);
-    });
-  }
-
   void showDeleteConfirmationPopUp(BuildContext context, Goal goal) {
     showDialog(
       context: context,
@@ -890,7 +732,7 @@ class _GoalListViewState extends State<GoalListView> {
                                 Theme.of(context).colorScheme.error)),
                         onPressed: () {
                           Navigator.of(context).pop();
-                          deleteGoal(context, goal);
+                          goalHandler.deleteGoal(context, goal);
                         },
                         child: Text(
                             AppLocalizations.of(context)!.deletionSubmit,
@@ -909,6 +751,10 @@ class _GoalListViewState extends State<GoalListView> {
   }
 
   Widget getDropDownRow(BuildContext context) {
+    if (goalHandler.curGoalIndex == -1 && goalHandler.goallist.isNotEmpty) {
+      mapUtils.updateMap(context, goalHandler, goalHandler.goallist[0]);
+    }
+
     return Container(
         color: Theme.of(context).colorScheme.secondary,
         child: Row(
@@ -918,11 +764,13 @@ class _GoalListViewState extends State<GoalListView> {
                 width: MediaQuery.of(context).size.width * 0.60,
                 child: DropdownButton(
                   isExpanded: true,
-                  value: goallist[curGoalIndex],
+                  value: goalHandler.goallist.isNotEmpty
+                      ? goalHandler.curGoal
+                      : null,
                   icon: const Icon(Icons.keyboard_arrow_down),
                   dropdownColor: Theme.of(context).colorScheme.secondary,
                   iconEnabledColor: Theme.of(context).colorScheme.onSecondary,
-                  items: goallist.map((Goal item) {
+                  items: goalHandler.goallist.map((Goal item) {
                     return DropdownMenuItem(
                       value: item,
                       child: Text(
@@ -935,7 +783,7 @@ class _GoalListViewState extends State<GoalListView> {
                   }).toList(),
                   onChanged: (Goal? newGoal) {
                     setState(() {
-                      updateMap(context, newGoal);
+                      mapUtils.updateMap(context, goalHandler, newGoal!);
                     });
                   },
                 )),
@@ -951,7 +799,7 @@ class _GoalListViewState extends State<GoalListView> {
             ),
             IconButton(
               onPressed: () {
-                showDeleteConfirmationPopUp(context, goallist[curGoalIndex]);
+                showDeleteConfirmationPopUp(context, goalHandler.curGoal);
               },
               color: Theme.of(context).colorScheme.secondary,
               icon: Icon(
@@ -972,10 +820,6 @@ class _GoalListViewState extends State<GoalListView> {
 /// Overall:
 /// - make popups pretty
 /// - make button style
-/// - add congratulations popup when its finished
-///
-/// locale: *
-/// - punkt und komma fun - bäääâh
 ///
 /// logic:
 /// - fix schräg issues
@@ -988,3 +832,7 @@ class _GoalListViewState extends State<GoalListView> {
 ///
 /// 1.1: Settings are not permanent (shared something something)
 /// auf miles switchen ändert die einheit nicht
+
+
+/// Issue with back press in settings - maybe i should get it back in the main screen and somehow just reload the whole settings
+/// this is not really future proof if i want to have more settings
