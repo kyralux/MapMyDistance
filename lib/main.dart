@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'src/app.dart';
 
@@ -10,6 +11,8 @@ void main() async {
   final settingsController = SettingsController(SettingsService());
 
   await settingsController.loadSettings();
-
-  runApp(MyApp(settingsController: settingsController));
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
+      .then((_) {
+    runApp(MyApp(settingsController: settingsController));
+  });
 }

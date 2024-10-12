@@ -2,7 +2,19 @@ import 'package:flutter/material.dart';
 
 import 'settings_service.dart';
 
-enum DistanceUnit { kilometers, miles }
+enum DistanceUnit {
+  kilometers,
+  miles;
+
+  String get short {
+    switch (this) {
+      case DistanceUnit.kilometers:
+        return 'km';
+      case DistanceUnit.miles:
+        return 'mi';
+    }
+  }
+}
 
 class SettingsController with ChangeNotifier {
   SettingsController(this._settingsService);

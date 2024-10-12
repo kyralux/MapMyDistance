@@ -32,12 +32,12 @@ class MyApp extends StatelessWidget {
                 primary: Color.fromARGB(255, 255, 255, 255),
                 onPrimary: Colors.black,
                 secondary: Color.fromARGB(255, 54, 212, 223),
-                onSecondary: Color.fromARGB(
-                    255, 79, 79, 79), // Color.fromARGB(255, 61, 113, 255),
-                tertiary: Color(0xFF003ef9),
+                onSecondary: Color.fromARGB(255, 79, 79, 79),
+                onTertiary: Colors.black, // Color.fromARGB(255, 61, 113, 255),
+                tertiary: Color.fromARGB(255, 255, 230, 0),
                 error: Colors.redAccent,
                 onError: Colors.white,
-                surface: Color.fromARGB(255, 255, 231, 160),
+                surface: Color.fromARGB(255, 255, 255, 255),
                 onSurface: Colors.black,
                 brightness: Brightness.light),
             textTheme: TextTheme(

@@ -223,7 +223,7 @@ class _GoalListViewState extends State<GoalListView> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               FloatingActionButton(
-                onPressed: () => showPopup(context, null),
+                onPressed: () => showGoalDialog(context, null),
                 heroTag: 'addButton',
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 child: Icon(
@@ -266,11 +266,14 @@ class _GoalListViewState extends State<GoalListView> {
                   padding: const EdgeInsets.all(0),
                   child: getProgressBar(),
                 ),
-                Text(
-                  "${formatNumber(goalHandler.curGoal.curDistance)} / ${formatNumber(goalHandler.curGoal.totalDistance)} ${widget.controller.distanceUnit.name}",
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                )
+                Container(
+                    width: double.infinity,
+                    color: Theme.of(context).colorScheme.tertiary,
+                    child: Text(
+                      "${formatNumber(goalHandler.curGoal.curDistance)} / ${formatNumber(goalHandler.curGoal.totalDistance)} ${widget.controller.distanceUnit.short}",
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    )),
               ],
             ),
           ),
@@ -279,7 +282,7 @@ class _GoalListViewState extends State<GoalListView> {
     );
   }
 
-  void showPopup(BuildContext context, Goal? goal) {
+  void showGoalDialog(BuildContext context, Goal? goal) {
     LatLng? selectedLocationStart;
     LatLng? selectedLocationEnd;
     TextEditingController goalController =
@@ -292,100 +295,84 @@ class _GoalListViewState extends State<GoalListView> {
       builder: (BuildContext context) {
         return StatefulBuilder(builder: (context, StateSetter setState) {
           return AlertDialog(
-            title: Text(AppLocalizations.of(context)!.newGoalTitle),
-            content: SingleChildScrollView(
-                child: Form(
-                    key: formKey,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextFormField(
-                          controller: goalController,
-                          decoration: InputDecoration(
-                              hintText:
-                                  AppLocalizations.of(context)!.newGoalName),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return AppLocalizations.of(context)!.newGoalName;
-                            }
-                            if (value.length > 100) {
-                              return AppLocalizations.of(context)!
-                                  .errorGoalNameLong;
-                            }
-                            return null;
-                          },
+              titlePadding: EdgeInsets.zero,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+              ),
+              title: Container(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .secondary, // Set background color for title
+                  padding: EdgeInsets.all(16), // Add padding
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)!.newGoalTitle,
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSecondary, // Text color
                         ),
-                        Row(children: [
-                          Expanded(
-                              child: TextFormField(
-                                  readOnly: true,
-                                  controller: startPositionController,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return AppLocalizations.of(context)!
-                                          .newGoaStart;
-                                    }
-                                    return null;
-                                  },
-                                  decoration: InputDecoration(
-                                      hintText: AppLocalizations.of(context)!
-                                          .newGoaStart))),
-                          FilledButton(
-                            onPressed: () async {
-                              selectedLocationStart = await showLocationPicker(
-                                  context,
-                                  AppLocalizations.of(context)!
-                                      .locationPickerStart);
-                              if (selectedLocationStart != null) {
-                                startPositionController.text =
-                                    selectedLocationStart.toString();
+                      ),
+                      IconButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          icon: const Icon(Icons.close))
+                    ],
+                  )),
+              content: SingleChildScrollView(
+                  child: Form(
+                      key: formKey,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextFormField(
+                            controller: goalController,
+                            decoration: InputDecoration(
+                                hintText:
+                                    AppLocalizations.of(context)!.newGoalName),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return AppLocalizations.of(context)!
+                                    .newGoalName;
                               }
-                              if (selectedLocationEnd != null) {
-                                setState(() {
-                                  calculatedDistance =
-                                      mapUtils.calculateDistance(
-                                          selectedLocationStart?.latitude,
-                                          selectedLocationStart?.longitude,
-                                          selectedLocationEnd?.latitude,
-                                          selectedLocationEnd?.longitude);
-                                });
+                              if (value.length > 100) {
+                                return AppLocalizations.of(context)!
+                                    .errorGoalNameLong;
                               }
+                              return null;
                             },
-                            style: ButtonStyle(
-                                backgroundColor: WidgetStatePropertyAll(
-                                    Theme.of(context).colorScheme.secondary)),
-                            child: Icon(
-                              Icons.add_location,
-                              color: Theme.of(context).colorScheme.onSecondary,
-                            ),
-                          )
-                        ]),
-                        Row(children: [
-                          Expanded(
-                              child: TextFormField(
-                                  readOnly: true,
-                                  controller: endPositionController,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return AppLocalizations.of(context)!
-                                          .newGoalEnde;
-                                    }
-                                    return null;
-                                  },
-                                  decoration: InputDecoration(
-                                      hintText: AppLocalizations.of(context)!
-                                          .locationPickerEnd))),
-                          FilledButton(
-                            onPressed: () async {
-                              selectedLocationEnd = await showLocationPicker(
-                                  context,
-                                  AppLocalizations.of(context)!
-                                      .locationPickerEnd);
-                              if (selectedLocationEnd != null) {
-                                endPositionController.text =
-                                    selectedLocationEnd.toString();
+                          ),
+                          Row(children: [
+                            Expanded(
+                                child: TextFormField(
+                                    readOnly: true,
+                                    controller: startPositionController,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return AppLocalizations.of(context)!
+                                            .newGoaStart;
+                                      }
+                                      return null;
+                                    },
+                                    decoration: InputDecoration(
+                                        hintText: AppLocalizations.of(context)!
+                                            .newGoaStart))),
+                            FilledButton(
+                              onPressed: () async {
+                                selectedLocationStart =
+                                    await showLocationPicker(
+                                        context,
+                                        AppLocalizations.of(context)!
+                                            .locationPickerStart);
                                 if (selectedLocationStart != null) {
+                                  startPositionController.text =
+                                      selectedLocationStart.toString();
+                                }
+                                if (selectedLocationEnd != null) {
                                   setState(() {
                                     calculatedDistance =
                                         mapUtils.calculateDistance(
@@ -395,96 +382,127 @@ class _GoalListViewState extends State<GoalListView> {
                                             selectedLocationEnd?.longitude);
                                   });
                                 }
-                              }
-                            },
-                            style: ButtonStyle(
-                                backgroundColor: WidgetStatePropertyAll(
-                                    Theme.of(context).colorScheme.secondary)),
-                            child: Icon(
-                              Icons.add_location,
-                              color: Theme.of(context).colorScheme.onSecondary,
+                              },
+                              style: ButtonStyle(
+                                  backgroundColor: WidgetStatePropertyAll(
+                                      Theme.of(context).colorScheme.tertiary)),
+                              child: Icon(
+                                Icons.add_location,
+                                color: Theme.of(context).colorScheme.onTertiary,
+                              ),
+                            )
+                          ]),
+                          Row(children: [
+                            Expanded(
+                                child: TextFormField(
+                                    readOnly: true,
+                                    controller: endPositionController,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return AppLocalizations.of(context)!
+                                            .newGoalEnde;
+                                      }
+                                      return null;
+                                    },
+                                    decoration: InputDecoration(
+                                        hintText: AppLocalizations.of(context)!
+                                            .locationPickerEnd))),
+                            FilledButton(
+                              onPressed: () async {
+                                selectedLocationEnd = await showLocationPicker(
+                                    context,
+                                    AppLocalizations.of(context)!
+                                        .locationPickerEnd);
+                                if (selectedLocationEnd != null) {
+                                  endPositionController.text =
+                                      selectedLocationEnd.toString();
+                                  if (selectedLocationStart != null) {
+                                    setState(() {
+                                      calculatedDistance =
+                                          mapUtils.calculateDistance(
+                                              selectedLocationStart?.latitude,
+                                              selectedLocationStart?.longitude,
+                                              selectedLocationEnd?.latitude,
+                                              selectedLocationEnd?.longitude);
+                                    });
+                                  }
+                                }
+                              },
+                              style: ButtonStyle(
+                                  backgroundColor: WidgetStatePropertyAll(
+                                      Theme.of(context).colorScheme.tertiary)),
+                              child: Icon(
+                                Icons.add_location,
+                                color: Theme.of(context).colorScheme.onTertiary,
+                              ),
+                            ),
+                          ]),
+                          const SizedBox(
+                            height: 50,
+                          ),
+                          Text(AppLocalizations.of(context)!.newGoaDistance,
+                              style: Theme.of(context).textTheme.bodyMedium),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          Container(
+                            padding: EdgeInsets.all(25),
+                            width: double
+                                .infinity, // Make the card take full available width
+                            child: Center(
+                              //padding: const EdgeInsets.all(20.0),
+                              child: Text(
+                                "${formatNumber(calculatedDistance)} ${widget.controller.distanceUnit.short}",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .tertiary,
+                                    ),
+                              ),
                             ),
                           ),
-                        ]),
-                        const SizedBox(
-                          height: 50,
-                        ),
-                        Text(AppLocalizations.of(context)!.newGoaDistance,
-                            style: Theme.of(context).textTheme.bodyMedium),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Card(
-                            color: Theme.of(context).colorScheme.secondary,
-                            child: Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: Text(
-                                  "${formatNumber(calculatedDistance)} ${widget.controller.distanceUnit.name}",
-                                  style:
-                                      Theme.of(context).textTheme.bodyMedium),
-                            )),
-                      ],
-                    ))),
-            actions: [
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      FilledButton(
-                          style: ButtonStyle(
-                              backgroundColor: WidgetStateProperty.all(
-                                  Color.fromARGB(255, 223, 223, 223))),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: Text(AppLocalizations.of(context)!.cancel,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium!
-                                  .copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface))),
-                      FilledButton(
-                          style: ButtonStyle(
-                              backgroundColor: WidgetStateProperty.all(
-                                  Theme.of(context).colorScheme.secondary)),
-                          onPressed: () {
-                            if (formKey.currentState?.validate() ?? false) {
-                              setState(() {
-                                if (selectedLocationEnd != null &&
-                                    selectedLocationStart != null) {
-                                  goalHandler.addGoal(
-                                      goalController.text,
-                                      "",
-                                      selectedLocationStart!.latitude,
-                                      selectedLocationStart!.longitude,
-                                      selectedLocationEnd!.latitude,
-                                      selectedLocationEnd!.longitude,
-                                      false,
-                                      calculatedDistance,
-                                      0.0,
-                                      Theme.of(context).colorScheme);
-                                  calculatedDistance = 0;
-                                  Navigator.of(context).pop();
-                                }
-                              });
-                            }
-                          },
-                          child: Text(AppLocalizations.of(context)!.save,
-                              maxLines: 1,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium!
-                                  .copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface))),
-                    ]),
-              )
-            ],
-          );
+                        ],
+                      ))),
+              actions: [
+                Center(
+                    child: ElevatedButton.icon(
+                  style: ButtonStyle(
+                      backgroundColor: WidgetStateProperty.all(
+                          Theme.of(context).colorScheme.secondary)),
+                  label: Text(AppLocalizations.of(context)!.save,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                          color: Theme.of(context).colorScheme.onSecondary)),
+                  icon: Icon(
+                    Icons.add,
+                    color: Theme.of(context).colorScheme.onSecondary,
+                  ),
+                  onPressed: () {
+                    if (formKey.currentState?.validate() ?? false) {
+                      setState(() {
+                        if (selectedLocationEnd != null &&
+                            selectedLocationStart != null) {
+                          goalHandler.addGoal(
+                              goalController.text,
+                              "",
+                              selectedLocationStart!.latitude,
+                              selectedLocationStart!.longitude,
+                              selectedLocationEnd!.latitude,
+                              selectedLocationEnd!.longitude,
+                              false,
+                              calculatedDistance,
+                              0.0,
+                              Theme.of(context).colorScheme);
+                          calculatedDistance = 0;
+                          Navigator.of(context).pop();
+                        }
+                      });
+                    }
+                  },
+                ))
+              ]);
         });
       },
     );
@@ -511,31 +529,47 @@ class _GoalListViewState extends State<GoalListView> {
             FittedBox(
               child: Row(
                 children: [
-                  FilledButton(
-                    style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.all(
-                            Color.fromARGB(255, 223, 223, 223))),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(
-                      AppLocalizations.of(context)!.cancel,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                  FilledButton(
+                  TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(AppLocalizations.of(context)!.cancel,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium!
+                              .copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface))),
+                  ElevatedButton.icon(
                     style: ButtonStyle(
                         backgroundColor: WidgetStateProperty.all(
                             Theme.of(context).colorScheme.secondary)),
+                    label: Text(AppLocalizations.of(context)!.save,
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                            color: Theme.of(context).colorScheme.onSecondary)),
+                    icon: Icon(
+                      Icons.add,
+                      color: Theme.of(context).colorScheme.onSecondary,
+                    ),
                     onPressed: () {
                       Navigator.of(context)
                           .pop(_mapControllerDialog.camera.center);
                     },
-                    child: Text(
-                      AppLocalizations.of(context)!.save,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
                   ),
+                  // FilledButton(
+                  //   style: ButtonStyle(
+                  //       backgroundColor: WidgetStateProperty.all(
+                  //           Theme.of(context).colorScheme.secondary)),
+                  //   onPressed: () {
+                  //     Navigator.of(context)
+                  //         .pop(_mapControllerDialog.camera.center);
+                  //   },
+                  //   child: Text(
+                  //     AppLocalizations.of(context)!.save,
+                  //     style: Theme.of(context).textTheme.bodyMedium,
+                  //   ),
+                  // ),
                 ],
               ),
             )
@@ -553,7 +587,34 @@ class _GoalListViewState extends State<GoalListView> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(AppLocalizations.of(context)!.distanceTitle),
+          titlePadding: EdgeInsets.zero,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+          ),
+          title: Container(
+              color: Theme.of(context).colorScheme.secondary,
+              padding: const EdgeInsets.all(16), // Add padding
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.distanceTitle,
+                    style: TextStyle(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSecondary, // Text color
+                    ),
+                  ),
+                  IconButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      icon: Icon(
+                        Icons.close,
+                        color: Theme.of(context).colorScheme.onSecondary,
+                      ))
+                ],
+              )),
           content: SingleChildScrollView(
               child: Form(
                   key: formKey,
@@ -565,9 +626,8 @@ class _GoalListViewState extends State<GoalListView> {
                           child: TextFormField(
                         controller: distanceController,
                         decoration: InputDecoration(
-                            hintText:
-                                AppLocalizations.of(context)!.distanceHint,
-                            border: OutlineInputBorder()),
+                          hintText: AppLocalizations.of(context)!.distanceHint,
+                        ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -588,47 +648,36 @@ class _GoalListViewState extends State<GoalListView> {
                         },
                       )),
                       const SizedBox(width: 10),
-                      Text(widget.controller.distanceUnit.name)
+                      Text(widget.controller.distanceUnit.short)
                     ]),
                   ]))),
           actions: [
-            FittedBox(
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                  FilledButton(
-                    style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.all(
-                            Color.fromARGB(255, 223, 223, 223))),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(AppLocalizations.of(context)!.cancel,
-                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface)),
+            Center(
+              child: ElevatedButton.icon(
+                  style: ButtonStyle(
+                      backgroundColor: WidgetStateProperty.all(
+                          Theme.of(context).colorScheme.secondary)),
+                  label: Text(AppLocalizations.of(context)!.save,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                          color: Theme.of(context).colorScheme.onSecondary)),
+                  icon: Icon(
+                    Icons.add,
+                    color: Theme.of(context).colorScheme.onSecondary,
                   ),
-                  FilledButton(
-                    style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.all(
-                            Theme.of(context).colorScheme.secondary)),
-                    onPressed: () {
-                      if (formKey.currentState?.validate() ?? false) {
-                        setState(() {
-                          goalHandler.addWorkout(
-                              f.parse(distanceController.text).toDouble(),
-                              Theme.of(context).colorScheme);
-                          Navigator.of(context).pop();
-                          if (goalHandler.curGoal.evalFinished()) {
-                            getCongratulationsPopup(context);
-                          }
-                        });
-                      }
-                    },
-                    child: Text(AppLocalizations.of(context)!.save,
-                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface)),
-                  )
-                ])),
+                  onPressed: () {
+                    if (formKey.currentState?.validate() ?? false) {
+                      setState(() {
+                        goalHandler.addWorkout(
+                            f.parse(distanceController.text).toDouble(),
+                            Theme.of(context).colorScheme);
+                        Navigator.of(context).pop();
+                        if (goalHandler.curGoal.evalFinished()) {
+                          getCongratulationsPopup(context);
+                        }
+                      });
+                    }
+                  }),
+            ),
           ],
         );
       },
@@ -676,7 +725,37 @@ class _GoalListViewState extends State<GoalListView> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(AppLocalizations.of(context)!.deletionTitle),
+          titlePadding: EdgeInsets.zero,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+          ),
+
+          title: Container(
+              color: Theme.of(context)
+                  .colorScheme
+                  .error, // Set background color for title
+              padding: EdgeInsets.all(16), // Add padding
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.deletionTitle,
+                    style: TextStyle(
+                      color:
+                          Theme.of(context).colorScheme.onError, // Text color
+                    ),
+                  ),
+                  IconButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      icon: Icon(
+                        Icons.close,
+                        color: Theme.of(context).colorScheme.onError,
+                      ))
+                ],
+              )),
+          //Text(AppLocalizations.of(context)!.deletionTitle),
           content: Column(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -686,56 +765,26 @@ class _GoalListViewState extends State<GoalListView> {
                 const SizedBox(height: 10),
                 Container(
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        border: Border.all(
-                            width: 2,
-                            color: Theme.of(context).colorScheme.error)),
                     child: Text(goal.name,
-                        style: Theme.of(context).textTheme.bodyLarge))
+                        style: Theme.of(context).textTheme.titleLarge))
               ]),
           actions: [
-            FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      FilledButton(
-                        style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
-                                Color.fromARGB(255, 223, 223, 223))),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: Text(AppLocalizations.of(context)!.cancel,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium!
-                                .copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface)),
-                      ),
-                      FilledButton(
-                        style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
-                                Theme.of(context).colorScheme.error)),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          setState(() {
-                            goalHandler.deleteGoal(
-                                goal, Theme.of(context).colorScheme);
-                          });
-                        },
-                        child: Text(
-                            AppLocalizations.of(context)!.deletionSubmit,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium!
-                                .copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.onError)),
-                      ),
-                    ]))
+            Center(
+              child: FilledButton(
+                style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.all(
+                        Theme.of(context).colorScheme.error)),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  setState(() {
+                    goalHandler.deleteGoal(goal, Theme.of(context).colorScheme);
+                  });
+                },
+                child: Text(AppLocalizations.of(context)!.deletionSubmit,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onError)),
+              ),
+            )
           ],
         );
       },
@@ -783,7 +832,7 @@ class _GoalListViewState extends State<GoalListView> {
                 )),
             IconButton(
               onPressed: () {
-                showPopup(context, null);
+                showGoalDialog(context, null);
               },
               color: Theme.of(context).colorScheme.secondary,
               icon: Icon(
@@ -810,16 +859,15 @@ class _GoalListViewState extends State<GoalListView> {
 /// bar prozent ist nicht mittig
 ///
 /// 1.0:
-///
 /// Overall:
 /// - make popups pretty
 /// - make button style
+/// - have a text field style
+/// - final theme -> add dark theme
+/// - 
 ///
 /// logic:
 /// - fix schräg issues
-/// - fix issue with moving the map after something is updated
 ///
-/// Settings:
-/// - add dark theme
 /// wenn ich bei distanz 1.0 hinzufüge ist alles weird, komma ist jetzt super
 ///
