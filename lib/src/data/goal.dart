@@ -40,16 +40,9 @@ class Goal {
 
   bool evalFinished() {
     if (curDistance >= totalDistance) {
+      finished = true;
       return true;
     }
     return false;
   }
-
-  // @override
-  // bool operator ==(Object other) {
-  //   return other is Goal && id == other.id;
-  // }
-
-  // @override
-  // int get hashCode => id.hashCode;
 }

@@ -86,4 +86,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-/// TODO: kilometer/miles change only works after changing the view

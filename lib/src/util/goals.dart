@@ -37,23 +37,18 @@ class GoalHandler {
 
     DatabaseHelper.insertGoal(goal);
 
-    //setState(() {
     goallist.add(goal);
-    //});
-    return mapUtils.updateMap(context, this, goal);
+    mapUtils.updateMap(context, this, goal);
   }
 
   void deleteGoal(BuildContext context, Goal goal) {
-    //setState(() {
     goallist.removeAt(curGoalIndex);
     if (goallist.isNotEmpty) {
-      mapUtils.updateMap(
-          context, this, goallist[curGoalIndex]); // viel geändert
+      mapUtils.updateMap(context, this, goallist[0]);
     } else {
       curGoalIndex = -1;
     }
     DatabaseHelper.deleteGoal(goal.id!);
-    //}//);
   }
 
   void addWorkout(BuildContext context, double distance) {
@@ -65,13 +60,12 @@ class GoalHandler {
   Future<void> loadGoalList(BuildContext context) async {
     List<Goal> v = await DatabaseHelper.getGoals();
 
-    //setState(() {
     if (v.isNotEmpty) {
       goallist = v;
       updateCurGoal();
-      //updateMap(context, goallist[curGoalIndex]); this breaks the controller thingy
+      mapUtils.updateMap(
+          context, this, curGoal); //this breaks the controller thingy
     }
-
-    //});
   }
 }
+// adding new goals doesnt work right now

@@ -13,7 +13,7 @@ import 'package:mapgoal/src/util/map.dart';
 import 'package:mapgoal/src/settings/settings_view.dart';
 
 class GoalListView extends StatefulWidget {
-  GoalListView({super.key, required this.controller});
+  const GoalListView({super.key, required this.controller});
   static const routeName = '/';
 
   final SettingsController controller;
@@ -24,7 +24,6 @@ class GoalListView extends StatefulWidget {
 
 class _GoalListViewState extends State<GoalListView> {
   double calculatedDistance = 0.0;
-  //String unit = "km";
   late NumberFormat f = NumberFormat.decimalPattern("en_en");
   final MapUtils mapUtils = MapUtils();
   GoalHandler goalHandler = GoalHandler();
@@ -33,16 +32,14 @@ class _GoalListViewState extends State<GoalListView> {
   @override
   void initState() {
     super.initState();
-    //unit = widget.controller.distanceUnit.name;
+
     goalHandler.loadGoalList(context);
-    if (goalHandler.goallist.isNotEmpty) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        // todo thisworks but ugly
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (goalHandler.goallist.isNotEmpty) {
         mapUtils.updateMap(context, goalHandler,
             goalHandler.goallist[goalHandler.curGoalIndex]);
-      });
-    }
-    //
+      }
+    });
   }
 
   @override
@@ -54,6 +51,13 @@ class _GoalListViewState extends State<GoalListView> {
 
   @override
   Widget build(BuildContext context) {
+    setState(() {
+      if (goalHandler.goallist.isNotEmpty) {
+        mapUtils.updateMap(context, goalHandler,
+            goalHandler.goallist[goalHandler.curGoalIndex]);
+      }
+    });
+
     final locale = Localizations.localeOf(context);
     f = NumberFormat.decimalPattern(locale.toString());
     return Scaffold(
@@ -81,31 +85,7 @@ class _GoalListViewState extends State<GoalListView> {
               onPressed: () async {
                 var result = await Navigator.restorablePushNamed(
                     context, SettingsView.routeName);
-                // var result = await Navigator.pushNamed(
-                //     //restorablePushNamed(
-                //     context,
-                //     SettingsView.routeName);
-                // final result = await Navigator.pushNamed(
-                //   context,
-                //   SettingsView.routeName,
-                // );
-
-                // if (mounted && result != null) {
-                //   setState(() {
-                //     unit = (result as DistanceUnit)
-                //         .name; // whty does this get called when setting?
-                //     goalHandler.curGoal.curDistance += 0;
-                //   });
-                // }
-              }
-              // setState(() {
-              //   unit = widget.controller.distanceUnit.name;
-              //   goalHandler.curGoal.curDistance += 0;
-
-              //   /// das muss woanders hin, das wird erst ausgeführt nachdem man nochmal auf settigs gesdrückt hat
-              // });
-              //},
-              ),
+              }),
         ],
       ),
       body: Container(
@@ -195,7 +175,7 @@ class _GoalListViewState extends State<GoalListView> {
         ),
         Center(
             child: Text(
-          '${goalHandler.curGoal.curDistance / goalHandler.curGoal.totalDistance * 100}%',
+          '${(goalHandler.curGoal.curDistance / goalHandler.curGoal.totalDistance * 100).toStringAsFixed(2)}%',
           style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
@@ -251,31 +231,27 @@ class _GoalListViewState extends State<GoalListView> {
           ),
           elevation: 5,
           child: ClipRRect(
-              borderRadius: BorderRadius.circular(16.0),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Flexible(
-                  flex: 10,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      getDropDownRow(context),
-                      mapUtils.getMap(
-                        LatLng(goalHandler.curGoal.latStart,
-                            goalHandler.curGoal.longStart),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(0),
-                        child: getProgressBar(),
-                      ),
-                      Text(
-                        "${formatNumber(goalHandler.curGoal.curDistance)} / ${formatNumber(goalHandler.curGoal.totalDistance)} ${widget.controller.distanceUnit.name}",
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      )
-                    ],
-                  ),
+            borderRadius: BorderRadius.circular(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                getDropDownRow(context),
+                mapUtils.getMap(
+                  LatLng(goalHandler.curGoal.latStart,
+                      goalHandler.curGoal.longStart),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(0),
+                  child: getProgressBar(),
+                ),
+                Text(
+                  "${formatNumber(goalHandler.curGoal.curDistance)} / ${formatNumber(goalHandler.curGoal.totalDistance)} ${widget.controller.distanceUnit.name}",
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge,
                 )
-              ])),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -454,22 +430,24 @@ class _GoalListViewState extends State<GoalListView> {
                                   Theme.of(context).colorScheme.secondary)),
                           onPressed: () {
                             if (formKey.currentState?.validate() ?? false) {
-                              if (selectedLocationEnd != null &&
-                                  selectedLocationStart != null) {
-                                goalHandler.addGoal(
-                                    context,
-                                    goalController.text,
-                                    "",
-                                    selectedLocationStart!.latitude,
-                                    selectedLocationStart!.longitude,
-                                    selectedLocationEnd!.latitude,
-                                    selectedLocationEnd!.longitude,
-                                    false,
-                                    calculatedDistance,
-                                    0.0);
-                                calculatedDistance = 0;
-                                Navigator.of(context).pop();
-                              }
+                              setState(() {
+                                if (selectedLocationEnd != null &&
+                                    selectedLocationStart != null) {
+                                  goalHandler.addGoal(
+                                      context,
+                                      goalController.text,
+                                      "",
+                                      selectedLocationStart!.latitude,
+                                      selectedLocationStart!.longitude,
+                                      selectedLocationEnd!.latitude,
+                                      selectedLocationEnd!.longitude,
+                                      false,
+                                      calculatedDistance,
+                                      0.0);
+                                  calculatedDistance = 0;
+                                  Navigator.of(context).pop();
+                                }
+                              });
                             }
                           },
                           child: Text(AppLocalizations.of(context)!.save,
@@ -501,24 +479,12 @@ class _GoalListViewState extends State<GoalListView> {
           title: Text(title),
           content: SizedBox(
               width: double.maxFinite,
-              child: Stack(
-                children: [
-                  mapUtils.getLocationPickerMap(
-                    goalHandler.goallist.isNotEmpty
-                        ? LatLng(goalHandler.curGoal.latStart,
-                            goalHandler.curGoal.longStart)
-                        : const LatLng(49.843, 9.902056),
-                    _mapControllerDialog, //center of EU apparently,
-                  ),
-                  const Center(
-                    child: Icon(
-                      Icons.location_pin,
-                      size: 50,
-                      color: Colors.red,
-                    ),
-                  ),
-                ],
-              )),
+              child: mapUtils.getLocationPickerMap(
+                  goalHandler.goallist.isNotEmpty
+                      ? LatLng(goalHandler.curGoal.latStart,
+                          goalHandler.curGoal.longStart)
+                      : const LatLng(49.843, 9.902056),
+                  _mapControllerDialog)),
           actions: [
             FittedBox(
               child: Row(
@@ -732,7 +698,9 @@ class _GoalListViewState extends State<GoalListView> {
                                 Theme.of(context).colorScheme.error)),
                         onPressed: () {
                           Navigator.of(context).pop();
-                          goalHandler.deleteGoal(context, goal);
+                          setState(() {
+                            goalHandler.deleteGoal(context, goal);
+                          });
                         },
                         child: Text(
                             AppLocalizations.of(context)!.deletionSubmit,
@@ -827,12 +795,5 @@ class _GoalListViewState extends State<GoalListView> {
 ///
 /// Settings:
 /// - add dark theme
-/// - add km/miles
 /// wenn ich bei distanz 1.0 hinzufüge ist alles weird, komma ist jetzt super
 ///
-/// 1.1: Settings are not permanent (shared something something)
-/// auf miles switchen ändert die einheit nicht
-
-
-/// Issue with back press in settings - maybe i should get it back in the main screen and somehow just reload the whole settings
-/// this is not really future proof if i want to have more settings

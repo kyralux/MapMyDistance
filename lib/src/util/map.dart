@@ -62,9 +62,12 @@ class MapUtils {
   }
 
   Widget getLocationPickerMap(LatLng coordinates, MapController mapController) {
-    return Flexible(
-        flex: 10,
-        child: FlutterMap(
+    return Stack(
+      children: [
+        // Flexible(
+        //   flex: 10,
+        // child:
+        FlutterMap(
           mapController: mapController,
           options: MapOptions(
             minZoom: 1.0,
@@ -80,7 +83,23 @@ class MapUtils {
               userAgentPackageName: 'dev.fleaflet.flutter_map.example',
             ),
           ],
-        ));
+        ),
+        const Center(
+          child: Icon(
+            Icons.location_pin,
+            size: 50,
+            color: Colors.red,
+          ),
+        ) //,),
+        // mapUtils.getLocationPickerMap(
+        //   goalHandler.goallist.isNotEmpty
+        //       ? LatLng(goalHandler.curGoal.latStart,
+        //           goalHandler.curGoal.longStart)
+        //       : const LatLng(49.843, 9.902056),
+        //   _mapControllerDialog, //center of EU apparently,
+        // ),
+      ],
+    );
   }
 
   double validateZoomLevel(double zoom) {
@@ -130,9 +149,7 @@ class MapUtils {
   void updateMap(BuildContext context, GoalHandler goalHandler, Goal newValue) {
     markers.clear();
     polylines.clear();
-    var curGoalIndex = goalHandler.curGoalIndex;
     if (goalHandler.goallist.isNotEmpty) {
-      print("update map");
       goalHandler.curGoalIndex =
           goalHandler.goallist.indexWhere((goal) => goal.id == newValue.id);
       goalHandler.updateCurGoal();
