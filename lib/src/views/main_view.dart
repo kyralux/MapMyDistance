@@ -28,24 +28,45 @@ class _GoalListViewState extends State<GoalListView> {
   final MapUtils mapUtils = MapUtils();
   GoalHandler goalHandler = GoalHandler();
   final MapController _mapControllerDialog = MapController();
+  bool isDataLoaded = false;
 
-  @override
-  void initState() {
-    super.initState();
-
-    goalHandler.loadGoalList(context);
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (goalHandler.goallist.isNotEmpty) {
-        mapUtils.updateMap(context, goalHandler,
-            goalHandler.goallist[goalHandler.curGoalIndex]);
-      }
+  void _loadData() {
+    setState(() {
+      goalHandler.loadGoalList(Theme.of(context).colorScheme).then((_) {
+        setState(() {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (goalHandler.goallist.isNotEmpty) {
+              mapUtils.updateMap(
+                  goalHandler,
+                  goalHandler.goallist[goalHandler.curGoalIndex],
+                  Theme.of(context).colorScheme);
+            }
+          });
+        });
+      });
     });
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Only load data if it hasn't been loaded yet
+    if (!isDataLoaded) {
+      _loadData();
+      isDataLoaded = true; // Set flag to true after data is loaded
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   void dispose() {
-    //_mapController.dispose();
-    // _mapControllerDialog.dispose();
+    mapUtils.disposeController();
+    _mapControllerDialog.dispose();
     super.dispose();
   }
 
@@ -53,8 +74,10 @@ class _GoalListViewState extends State<GoalListView> {
   Widget build(BuildContext context) {
     setState(() {
       if (goalHandler.goallist.isNotEmpty) {
-        mapUtils.updateMap(context, goalHandler,
-            goalHandler.goallist[goalHandler.curGoalIndex]);
+        mapUtils.updateMap(
+            goalHandler,
+            goalHandler.goallist[goalHandler.curGoalIndex],
+            Theme.of(context).colorScheme);
       }
     });
 
@@ -83,8 +106,7 @@ class _GoalListViewState extends State<GoalListView> {
               icon: const Icon(Icons.settings),
               color: Theme.of(context).colorScheme.onPrimary,
               onPressed: () async {
-                var result = await Navigator.restorablePushNamed(
-                    context, SettingsView.routeName);
+                Navigator.restorablePushNamed(context, SettingsView.routeName);
               }),
         ],
       ),
@@ -434,7 +456,6 @@ class _GoalListViewState extends State<GoalListView> {
                                 if (selectedLocationEnd != null &&
                                     selectedLocationStart != null) {
                                   goalHandler.addGoal(
-                                      context,
                                       goalController.text,
                                       "",
                                       selectedLocationStart!.latitude,
@@ -443,7 +464,8 @@ class _GoalListViewState extends State<GoalListView> {
                                       selectedLocationEnd!.longitude,
                                       false,
                                       calculatedDistance,
-                                      0.0);
+                                      0.0,
+                                      Theme.of(context).colorScheme);
                                   calculatedDistance = 0;
                                   Navigator.of(context).pop();
                                 }
@@ -592,8 +614,9 @@ class _GoalListViewState extends State<GoalListView> {
                     onPressed: () {
                       if (formKey.currentState?.validate() ?? false) {
                         setState(() {
-                          goalHandler.addWorkout(context,
-                              f.parse(distanceController.text).toDouble());
+                          goalHandler.addWorkout(
+                              f.parse(distanceController.text).toDouble(),
+                              Theme.of(context).colorScheme);
                           Navigator.of(context).pop();
                           if (goalHandler.curGoal.evalFinished()) {
                             getCongratulationsPopup(context);
@@ -699,7 +722,8 @@ class _GoalListViewState extends State<GoalListView> {
                         onPressed: () {
                           Navigator.of(context).pop();
                           setState(() {
-                            goalHandler.deleteGoal(context, goal);
+                            goalHandler.deleteGoal(
+                                goal, Theme.of(context).colorScheme);
                           });
                         },
                         child: Text(
@@ -720,7 +744,8 @@ class _GoalListViewState extends State<GoalListView> {
 
   Widget getDropDownRow(BuildContext context) {
     if (goalHandler.curGoalIndex == -1 && goalHandler.goallist.isNotEmpty) {
-      mapUtils.updateMap(context, goalHandler, goalHandler.goallist[0]);
+      mapUtils.updateMap(
+          goalHandler, goalHandler.goallist[0], Theme.of(context).colorScheme);
     }
 
     return Container(
@@ -751,7 +776,8 @@ class _GoalListViewState extends State<GoalListView> {
                   }).toList(),
                   onChanged: (Goal? newGoal) {
                     setState(() {
-                      mapUtils.updateMap(context, goalHandler, newGoal!);
+                      mapUtils.updateMap(
+                          goalHandler, newGoal!, Theme.of(context).colorScheme);
                     });
                   },
                 )),

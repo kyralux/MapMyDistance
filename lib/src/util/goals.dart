@@ -14,7 +14,6 @@ class GoalHandler {
   }
 
   void addGoal(
-      BuildContext context,
       String name,
       String description,
       double latStart,
@@ -23,7 +22,8 @@ class GoalHandler {
       double longEnd,
       bool finished,
       double totalDistance,
-      double curDistance) {
+      double curDistance,
+      ColorScheme colors) {
     var goal = Goal(
         name: name,
         description: description,
@@ -38,34 +38,32 @@ class GoalHandler {
     DatabaseHelper.insertGoal(goal);
 
     goallist.add(goal);
-    mapUtils.updateMap(context, this, goal);
+    mapUtils.updateMap(this, goal, colors);
   }
 
-  void deleteGoal(BuildContext context, Goal goal) {
+  void deleteGoal(Goal goal, ColorScheme colors) {
     goallist.removeAt(curGoalIndex);
     if (goallist.isNotEmpty) {
-      mapUtils.updateMap(context, this, goallist[0]);
+      mapUtils.updateMap(this, goallist[0], colors);
     } else {
       curGoalIndex = -1;
     }
     DatabaseHelper.deleteGoal(goal.id!);
   }
 
-  void addWorkout(BuildContext context, double distance) {
+  void addWorkout(double distance, ColorScheme colors) {
     goallist[curGoalIndex].curDistance += distance;
-    mapUtils.updateUserMarker(context, goallist[curGoalIndex]);
+    mapUtils.updateUserMarker(goallist[curGoalIndex], colors);
     DatabaseHelper.editGoal(goallist[curGoalIndex]);
   }
 
-  Future<void> loadGoalList(BuildContext context) async {
+  Future<void> loadGoalList(ColorScheme colors) async {
     List<Goal> v = await DatabaseHelper.getGoals();
 
     if (v.isNotEmpty) {
       goallist = v;
       updateCurGoal();
-      mapUtils.updateMap(
-          context, this, curGoal); //this breaks the controller thingy
+      mapUtils.updateMap(this, curGoal, colors);
     }
   }
 }
-// adding new goals doesnt work right now

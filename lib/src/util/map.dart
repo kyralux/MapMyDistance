@@ -12,16 +12,14 @@ class MapUtils {
 
   final MapController _mapController = MapController();
 
-  void drawMap(BuildContext context, LatLng coordinates, Goal goal) {
+  void drawMap(LatLng coordinates, Goal goal, ColorScheme colors) {
     markers.addAll([
       Marker(
           point: LatLng(goal.latStart, goal.longStart),
-          child: Icon(Icons.fiber_manual_record,
-              color: Theme.of(context).colorScheme.secondary)),
+          child: Icon(Icons.fiber_manual_record, color: colors.secondary)),
       Marker(
           point: LatLng(goal.latEnd, goal.longEnd),
-          child:
-              Icon(Icons.flag, color: Theme.of(context).colorScheme.secondary)),
+          child: Icon(Icons.flag, color: colors.secondary)),
       Marker(
           point: coordinates,
           child: const Icon(Icons.person, color: Colors.black))
@@ -34,7 +32,7 @@ class MapUtils {
     polylines.add(Polyline(points: [
       LatLng(coordinates.latitude, coordinates.longitude),
       LatLng(goal.latStart, goal.longStart),
-    ], color: Theme.of(context).colorScheme.tertiary, strokeWidth: 4.0));
+    ], color: colors.tertiary, strokeWidth: 4.0));
   }
 
   Widget getMap(LatLng coordinates) {
@@ -146,7 +144,7 @@ class MapUtils {
     return (distance * 1000) / 1609.344;
   }
 
-  void updateMap(BuildContext context, GoalHandler goalHandler, Goal newValue) {
+  void updateMap(GoalHandler goalHandler, Goal newValue, ColorScheme colors) {
     markers.clear();
     polylines.clear();
     if (goalHandler.goallist.isNotEmpty) {
@@ -154,25 +152,19 @@ class MapUtils {
           goalHandler.goallist.indexWhere((goal) => goal.id == newValue.id);
       goalHandler.updateCurGoal();
       LatLng coordinates = calculateUserPosition(goalHandler.curGoal);
-      drawMap(context, coordinates, goalHandler.curGoal);
+      drawMap(coordinates, goalHandler.curGoal, colors);
       try {
         _mapController.move(calculateUserPosition(newValue), zoomLevel);
       } catch (e) {
         return;
-        // goalHandler;
       }
-
       return;
-      // goalHandler;
     }
-    goalHandler.curGoalIndex =
-        0; // kann ich das anders machen als goal handler hier zu übergeben?
+    goalHandler.curGoalIndex = 0;
     return;
-
-    ///goalHandler;
   }
 
-  void updateUserMarker(BuildContext context, Goal goal) {
+  void updateUserMarker(Goal goal, ColorScheme colors) {
     LatLng coordinates = calculateUserPosition(goal);
     markers.removeLast();
     markers.add(Marker(
@@ -182,7 +174,16 @@ class MapUtils {
     polylines.add(Polyline(points: [
       LatLng(coordinates.latitude, coordinates.longitude),
       LatLng(goal.latStart, goal.longStart),
-    ], color: Theme.of(context).colorScheme.tertiary, strokeWidth: 4.0));
-    _mapController.move(coordinates, _mapController.camera.zoom);
+    ], color: colors.tertiary, strokeWidth: 4.0));
+
+    try {
+      _mapController.move(coordinates, _mapController.camera.zoom);
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void disposeController() {
+    _mapController.dispose();
   }
 }
