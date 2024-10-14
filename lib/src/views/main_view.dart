@@ -50,11 +50,9 @@ class _GoalListViewState extends State<GoalListView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    // Only load data if it hasn't been loaded yet
     if (!isDataLoaded) {
       _loadData();
-      isDataLoaded = true; // Set flag to true after data is loaded
+      isDataLoaded = true;
     }
   }
 
@@ -172,7 +170,7 @@ class _GoalListViewState extends State<GoalListView> {
               ? 1.0
               : goalHandler.curGoal.curDistance /
                   goalHandler.curGoal.totalDistance,
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           progressColor: Colors.transparent,
           animation: true,
         ),
@@ -182,11 +180,12 @@ class _GoalListViewState extends State<GoalListView> {
                 goalHandler.curGoal.totalDistance,
             alignment: Alignment.centerLeft,
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFFf9bb00),
-                    Color(0xFFFF8C00),
+                    Color.fromARGB(255, 255, 247, 0),
+                    // Color(0xFFFF8C00),
+                    Theme.of(context).colorScheme.tertiary,
                   ],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
@@ -195,15 +194,17 @@ class _GoalListViewState extends State<GoalListView> {
             ),
           ),
         ),
-        Center(
+        Container(
+            padding: const EdgeInsets.only(top: 4),
+            alignment: Alignment.center,
             child: Text(
-          '${(goalHandler.curGoal.curDistance / goalHandler.curGoal.totalDistance * 100).toStringAsFixed(2)}%',
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        )),
+              '${(goalHandler.curGoal.curDistance / goalHandler.curGoal.totalDistance * 100).toStringAsFixed(2)}%',
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            )),
       ],
     );
   }
@@ -261,6 +262,7 @@ class _GoalListViewState extends State<GoalListView> {
                 mapUtils.getMap(
                   LatLng(goalHandler.curGoal.latStart,
                       goalHandler.curGoal.longStart),
+                  MediaQuery.of(context).platformBrightness == Brightness.dark,
                 ),
                 Padding(
                   padding: const EdgeInsets.all(0),
@@ -300,19 +302,15 @@ class _GoalListViewState extends State<GoalListView> {
                 borderRadius: BorderRadius.zero,
               ),
               title: Container(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .secondary, // Set background color for title
-                  padding: EdgeInsets.all(16), // Add padding
+                  color: Theme.of(context).colorScheme.secondary,
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         AppLocalizations.of(context)!.newGoalTitle,
                         style: TextStyle(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSecondary, // Text color
+                          color: Theme.of(context).colorScheme.onSecondary,
                         ),
                       ),
                       IconButton(
@@ -326,14 +324,20 @@ class _GoalListViewState extends State<GoalListView> {
                   child: Form(
                       key: formKey,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
                         children: [
                           TextFormField(
                             controller: goalController,
                             decoration: InputDecoration(
-                                hintText:
-                                    AppLocalizations.of(context)!.newGoalName),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
+                                  width: 2.0,
+                                ),
+                              ),
+                              hintText:
+                                  AppLocalizations.of(context)!.newGoalName,
+                            ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return AppLocalizations.of(context)!
@@ -345,6 +349,9 @@ class _GoalListViewState extends State<GoalListView> {
                               }
                               return null;
                             },
+                          ),
+                          const SizedBox(
+                            height: 30,
                           ),
                           Row(children: [
                             Expanded(
@@ -358,7 +365,7 @@ class _GoalListViewState extends State<GoalListView> {
                                       }
                                       return null;
                                     },
-                                    decoration: InputDecoration(
+                                    decoration: new InputDecoration.collapsed(
                                         hintText: AppLocalizations.of(context)!
                                             .newGoaStart))),
                             FilledButton(
@@ -404,9 +411,9 @@ class _GoalListViewState extends State<GoalListView> {
                                       }
                                       return null;
                                     },
-                                    decoration: InputDecoration(
+                                    decoration: new InputDecoration.collapsed(
                                         hintText: AppLocalizations.of(context)!
-                                            .locationPickerEnd))),
+                                            .newGoalEnde))),
                             FilledButton(
                               onPressed: () async {
                                 selectedLocationEnd = await showLocationPicker(
@@ -438,7 +445,7 @@ class _GoalListViewState extends State<GoalListView> {
                             ),
                           ]),
                           const SizedBox(
-                            height: 50,
+                            height: 30,
                           ),
                           Text(AppLocalizations.of(context)!.newGoaDistance,
                               style: Theme.of(context).textTheme.bodyMedium),
@@ -446,11 +453,9 @@ class _GoalListViewState extends State<GoalListView> {
                             height: 10,
                           ),
                           Container(
-                            padding: EdgeInsets.all(25),
-                            width: double
-                                .infinity, // Make the card take full available width
+                            padding: const EdgeInsets.all(15),
+                            width: double.infinity,
                             child: Center(
-                              //padding: const EdgeInsets.all(20.0),
                               child: Text(
                                 "${formatNumber(calculatedDistance)} ${widget.controller.distanceUnit.short}",
                                 style: Theme.of(context)
@@ -626,6 +631,12 @@ class _GoalListViewState extends State<GoalListView> {
                           child: TextFormField(
                         controller: distanceController,
                         decoration: InputDecoration(
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.secondary,
+                              width: 2.0,
+                            ),
+                          ),
                           hintText: AppLocalizations.of(context)!.distanceHint,
                         ),
                         keyboardType: TextInputType.number,
@@ -671,7 +682,7 @@ class _GoalListViewState extends State<GoalListView> {
                             f.parse(distanceController.text).toDouble(),
                             Theme.of(context).colorScheme);
                         Navigator.of(context).pop();
-                        if (goalHandler.curGoal.evalFinished()) {
+                        if (true) {
                           getCongratulationsPopup(context);
                         }
                       });
@@ -703,7 +714,7 @@ class _GoalListViewState extends State<GoalListView> {
                   child: FilledButton(
                       style: ButtonStyle(
                           backgroundColor: WidgetStateProperty.all(
-                              const Color.fromARGB(255, 223, 223, 223))),
+                              Theme.of(context).colorScheme.tertiary)),
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
@@ -714,7 +725,7 @@ class _GoalListViewState extends State<GoalListView> {
                               .copyWith(
                                   color: Theme.of(context)
                                       .colorScheme
-                                      .onSurface))))
+                                      .onTertiary))))
             ]);
       },
     );
@@ -729,12 +740,11 @@ class _GoalListViewState extends State<GoalListView> {
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.zero,
           ),
-
           title: Container(
               color: Theme.of(context)
                   .colorScheme
                   .error, // Set background color for title
-              padding: EdgeInsets.all(16), // Add padding
+              padding: const EdgeInsets.all(16), // Add padding
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -755,7 +765,6 @@ class _GoalListViewState extends State<GoalListView> {
                       ))
                 ],
               )),
-          //Text(AppLocalizations.of(context)!.deletionTitle),
           content: Column(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -855,19 +864,12 @@ class _GoalListViewState extends State<GoalListView> {
   }
 }
 
-/// weite wege, die schräg sind da läuft unser user icon vom weg runter
-/// bar prozent ist nicht mittig
-///
 /// 1.0:
 /// Overall:
-/// - make popups pretty
-/// - make button style
 /// - have a text field style
-/// - final theme -> add dark theme
-/// - 
+/// - final colors
 ///
 /// logic:
 /// - fix schräg issues
 ///
-/// wenn ich bei distanz 1.0 hinzufüge ist alles weird, komma ist jetzt super
-///
+/// probiere polyline zu pu;plizieren aber nur einen anteil

@@ -14,6 +14,14 @@ class MyApp extends StatelessWidget {
 
   final SettingsController settingsController;
 
+  TextTheme getTextThemes() {
+    return TextTheme(
+      bodyLarge: GoogleFonts.openSans(fontSize: 18),
+      titleLarge: GoogleFonts.abel(fontSize: 30, fontWeight: FontWeight.w900),
+      bodyMedium: GoogleFonts.openSans(fontSize: 20),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -27,45 +35,37 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             focusColor: Colors.pink,
             colorScheme: const ColorScheme(
-                //Color(0xFF00aedb) primary
-                //Color(0xFF00edce) sec
                 primary: Color.fromARGB(255, 255, 255, 255),
                 onPrimary: Colors.black,
                 secondary: Color.fromARGB(255, 54, 212, 223),
                 onSecondary: Color.fromARGB(255, 79, 79, 79),
-                onTertiary: Colors.black, // Color.fromARGB(255, 61, 113, 255),
-                tertiary: Color.fromARGB(255, 255, 230, 0),
+                onTertiary: Colors.white, // Color.fromARGB(255, 61, 113, 255),
+                tertiary: Color.fromARGB(
+                    255, 246, 174, 31), //Color.fromARGB(255, 255, 230, 0),
                 error: Colors.redAccent,
                 onError: Colors.white,
                 surface: Color.fromARGB(255, 255, 255, 255),
                 onSurface: Colors.black,
                 brightness: Brightness.light),
-            textTheme: TextTheme(
-              bodyLarge: GoogleFonts.openSans(fontSize: 18),
-              titleLarge: GoogleFonts.abel(
-                fontSize: 30,
-              ),
-              bodyMedium: GoogleFonts.openSans(fontSize: 20),
-            ),
+            textTheme: getTextThemes(),
           ),
-          // middleblue 00aedb, light 00edce, dark 003ef9, grey d6d6d6, yellow f9bb00 lighter yellow fff0c4
-          // darkTheme: ThemeData(
-          //   useMaterial3: true,
-          //   colorScheme: ColorScheme.fromSeed(
-          //       seedColor: Colors.blue, brightness: Brightness.dark),
-          //   textTheme: TextTheme(
-          //     bodyLarge: GoogleFonts.openSans(
-          //       fontSize: 18,
-          //       // fontWeight: FontWeight.bold,
-          //     ),
-          //     titleLarge: GoogleFonts.abel(
-          //       fontSize: 30,
-          //     ),
-          //     bodyMedium: GoogleFonts.openSans(fontSize: 20), // History
-
-          //     //handwritte: caveat
-          //   ),
-          // ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            focusColor: Colors.pink,
+            colorScheme: const ColorScheme(
+                primary: Color.fromARGB(255, 57, 57, 57),
+                onPrimary: Color.fromARGB(255, 255, 255, 255),
+                secondary: Color.fromARGB(255, 2, 88, 94),
+                onSecondary: Color.fromARGB(255, 199, 199, 199),
+                onTertiary: Colors.black, // Color.fromARGB(255, 61, 113, 255),
+                tertiary: Color.fromARGB(255, 144, 0, 108),
+                error: Colors.redAccent,
+                onError: Colors.white,
+                surface: Color.fromARGB(255, 57, 57, 57),
+                onSurface: Color.fromARGB(255, 231, 231, 231),
+                brightness: Brightness.dark),
+            textTheme: getTextThemes(),
+          ),
           themeMode: settingsController.themeMode,
           onGenerateRoute: (RouteSettings routeSettings) {
             return MaterialPageRoute<void>(

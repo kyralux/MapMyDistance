@@ -19,5 +19,10 @@
     "errorValidNumber": "Enter a valid number",
     "errorGoalNameLong": "Too many characters, limit it to 100",
     "congratsTitle":"Congratulations!",
-    "congratsDesc": "You did it! You reached your goal!"
+    "congratsDesc": "You did it! You reached your goal!",
+    "kilometers": "Kilometers",
+    "miles": "Miles",
+    "settings": "Settings",
+    "settingsUnit": "Unit",
+    "settingsTheme": "Theme"
 }

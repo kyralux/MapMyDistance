@@ -19,5 +19,10 @@
   "errorValidNumber": "ungültige Zahl",
   "errorGoalNameLong": "Zu langer Name",
   "congratsTitle":"Glückwunsch!",
-  "congratsDesc": "Du hast es geschafft! Du hast dein Ziel erreicht!"
+  "congratsDesc": "Du hast es geschafft! Du hast dein Ziel erreicht!",
+  "kilometers": "Kilometer",
+  "miles": "Meilen",
+  "settings": "Einstellungen",
+  "settingsUnit": "Einheit",
+  "settingsTheme": "Theme"
 }

@@ -9,9 +9,17 @@ class SettingsService {
     _prefs ??= await SharedPreferences.getInstance();
   }
 
-  Future<ThemeMode> themeMode() async => ThemeMode.system;
+  Future<ThemeMode> themeMode() async {
+    await _initPrefs();
+    final themeString = _prefs!.getString('theme_mode') ??
+        ThemeMode.system.name; // Default to system theme
+    return ThemeMode.values.firstWhere((e) => e.name == themeString);
+  }
 
-  Future<void> updateThemeMode(ThemeMode theme) async {}
+  Future<void> updateThemeMode(ThemeMode theme) async {
+    await _initPrefs();
+    await _prefs!.setString('theme_mode', theme.name);
+  }
 
   Future<DistanceUnit> distanceUnit() async {
     await _initPrefs();
@@ -25,9 +33,3 @@ class SettingsService {
     await _prefs!.setString('distance_unit', distanceUnit.name);
   }
 }
-
-
-// meine großen probleme beim programmieren
-/// neues lernen
-/// wohin mir allem? :o zb jetzt wo place ich die shared preferences?
-/// 
