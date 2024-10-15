@@ -7,7 +7,7 @@
   "newGoalName": "Name",
   "newGoaStart": "Startposition",
   "newGoalEnde": "Zielposition",
-  "newGoaDistance": "Berechnete Distanz zwischen Start und Ziel:",
+  "newGoaDistance": "Distanz:",
   "locationPickerStart": "Setze Startposition",
   "locationPickerEnd": "Setze Zielposition",
   "distanceTitle": "Distanz zurückgelegt",
@@ -24,5 +24,6 @@
   "miles": "Meilen",
   "settings": "Einstellungen",
   "settingsUnit": "Einheit",
-  "settingsTheme": "Theme"
+  "settingsTheme": "Theme",
+  "set": "gesetzt"
 }
