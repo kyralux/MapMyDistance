@@ -183,7 +183,9 @@ class _GoalListViewState extends State<GoalListView> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color.fromARGB(255, 255, 247, 0),
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Color.fromARGB(255, 41, 0, 130)
+                        : Color.fromARGB(255, 255, 247, 0),
                     // Color(0xFFFF8C00),
                     Theme.of(context).colorScheme.tertiary,
                   ],
@@ -199,8 +201,8 @@ class _GoalListViewState extends State<GoalListView> {
             alignment: Alignment.center,
             child: Text(
               '${(goalHandler.curGoal.curDistance / goalHandler.curGoal.totalDistance * 100).toStringAsFixed(2)}%',
-              style: const TextStyle(
-                color: Colors.black,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
@@ -515,13 +517,35 @@ class _GoalListViewState extends State<GoalListView> {
 
   Future<LatLng?> showLocationPicker(
     BuildContext context,
-    String title,
+    String titletext,
   ) {
     return showDialog<LatLng?>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(title),
+          titlePadding: EdgeInsets.zero,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+          ),
+          title: Container(
+              color: Theme.of(context).colorScheme.secondary,
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    titletext,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSecondary,
+                    ),
+                  ),
+                  IconButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      icon: const Icon(Icons.close))
+                ],
+              )),
           content: SizedBox(
               width: double.maxFinite,
               child: mapUtils.getLocationPickerMap(
@@ -529,53 +553,25 @@ class _GoalListViewState extends State<GoalListView> {
                       ? LatLng(goalHandler.curGoal.latStart,
                           goalHandler.curGoal.longStart)
                       : const LatLng(49.843, 9.902056),
-                  _mapControllerDialog)),
+                  _mapControllerDialog,
+                  Theme.of(context).colorScheme)),
           actions: [
-            FittedBox(
-              child: Row(
-                children: [
-                  TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: Text(AppLocalizations.of(context)!.cancel,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium!
-                              .copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface))),
-                  ElevatedButton.icon(
-                    style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.all(
-                            Theme.of(context).colorScheme.secondary)),
-                    label: Text(AppLocalizations.of(context)!.save,
-                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                            color: Theme.of(context).colorScheme.onSecondary)),
-                    icon: Icon(
-                      Icons.add,
-                      color: Theme.of(context).colorScheme.onSecondary,
-                    ),
-                    onPressed: () {
-                      Navigator.of(context)
-                          .pop(_mapControllerDialog.camera.center);
-                    },
-                  ),
-                  // FilledButton(
-                  //   style: ButtonStyle(
-                  //       backgroundColor: WidgetStateProperty.all(
-                  //           Theme.of(context).colorScheme.secondary)),
-                  //   onPressed: () {
-                  //     Navigator.of(context)
-                  //         .pop(_mapControllerDialog.camera.center);
-                  //   },
-                  //   child: Text(
-                  //     AppLocalizations.of(context)!.save,
-                  //     style: Theme.of(context).textTheme.bodyMedium,
-                  //   ),
-                  // ),
-                ],
+            Container(
+              alignment: Alignment.center,
+              child: ElevatedButton.icon(
+                style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.all(
+                        Theme.of(context).colorScheme.secondary)),
+                label: Text(AppLocalizations.of(context)!.save,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onSecondary)),
+                icon: Icon(
+                  Icons.add,
+                  color: Theme.of(context).colorScheme.onSecondary,
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop(_mapControllerDialog.camera.center);
+                },
               ),
             )
           ],
@@ -682,8 +678,10 @@ class _GoalListViewState extends State<GoalListView> {
                             f.parse(distanceController.text).toDouble(),
                             Theme.of(context).colorScheme);
                         Navigator.of(context).pop();
-                        if (true) {
+                        if (!goalHandler.curGoal.finished &&
+                            goalHandler.curGoal.evalFinished()) {
                           getCongratulationsPopup(context);
+                          goalHandler.curGoal.finished = true;
                         }
                       });
                     }
@@ -700,7 +698,22 @@ class _GoalListViewState extends State<GoalListView> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-            title: Text(AppLocalizations.of(context)!.congratsTitle),
+            titlePadding: EdgeInsets.zero,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.zero,
+            ),
+            title: Container(
+              color: Theme.of(context).colorScheme.secondary,
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                AppLocalizations.of(context)!.congratsTitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color:
+                      Theme.of(context).colorScheme.onSecondary, // Text color
+                ),
+              ),
+            ),
             content: Column(mainAxisSize: MainAxisSize.min, children: [
               Icon(
                 Icons.celebration,
@@ -869,7 +882,9 @@ class _GoalListViewState extends State<GoalListView> {
 /// - have a text field style
 /// - final colors
 ///
-/// logic:
-/// - fix schräg issues
-///
-/// probiere polyline zu pu;plizieren aber nur einen anteil
+/// 
+/// Cursor bei textfeldern klarer
+/// Tastatur einfahren nach goal eingabe
+/// runden auf 2 stellen km
+/// have empty drowdown and + buttons instead of FAB
+/// line unter dropdown weg
