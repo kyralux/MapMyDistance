@@ -22,7 +22,7 @@ class MapUtils {
           child: Icon(Icons.flag, color: colors.secondary)),
       Marker(
           point: coordinates,
-          child: const Icon(Icons.person, color: Colors.black))
+          child: Icon(Icons.person, color: colors.onSurface))
     ]);
 
     polylines.add(Polyline(points: [
@@ -37,7 +37,7 @@ class MapUtils {
 
   Widget getMap(LatLng coordinates, bool isDarkMode) {
     var url = isDarkMode
-        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
         : "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
     return Flexible(

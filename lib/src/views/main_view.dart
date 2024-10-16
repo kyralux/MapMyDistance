@@ -684,6 +684,7 @@ class _GoalListViewState extends State<GoalListView> {
                     Row(children: [
                       Expanded(
                           child: TextFormField(
+                        cursorColor: Theme.of(context).colorScheme.secondary,
                         controller: distanceController,
                         decoration: InputDecoration(
                           hintStyle: const TextStyle(color: Colors.grey),
@@ -940,13 +941,3 @@ class _GoalListViewState extends State<GoalListView> {
         ));
   }
 }
-
-/// 1.0:
-/// 
-/// Bug 0 distance -> validate that distance is bigger 0
-/// final name
-/// 
-/// issues
-/// erstes picker map loaden ist laaahm
-/// beim theme change flackert die umrandung der map card nochmal auf
-/// bei theme wechsel lädt er die map nicht neu bis zum nächsten öffnen
