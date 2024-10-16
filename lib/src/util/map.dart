@@ -4,7 +4,6 @@ import 'package:latlong2/latlong.dart';
 import 'package:mapgoal/src/data/goal.dart';
 import 'package:flutter_map_math/flutter_geo_math.dart';
 import 'package:mapgoal/src/util/goals.dart';
-import 'dart:math';
 
 class MapUtils {
   List<Marker> markers = [];

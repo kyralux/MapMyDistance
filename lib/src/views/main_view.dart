@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -90,7 +92,7 @@ class _GoalListViewState extends State<GoalListView> {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Image.asset(
-                "image/gradientGPS-empty.PNG",
+                "assets/images/gradientGPS-empty.PNG",
                 height: MediaQuery.of(context).size.height * 0.05,
               ),
             ),
@@ -110,7 +112,9 @@ class _GoalListViewState extends State<GoalListView> {
               }),
         ],
       ),
-      body: Container(
+      body: SingleChildScrollView(
+          child: Container(
+        height: MediaQuery.of(context).size.height * 0.9,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -133,7 +137,7 @@ class _GoalListViewState extends State<GoalListView> {
                 ],
               )
             : _buildEmptyView(context),
-      ),
+      )),
       floatingActionButton:
           goalHandler.goallist.isNotEmpty ? _buildActionButton(context) : null,
     );
@@ -162,16 +166,25 @@ class _GoalListViewState extends State<GoalListView> {
             : distance);
   }
 
+  double calculateProgress() {
+    var result = 0.0;
+    try {
+      result =
+          goalHandler.curGoal.curDistance / goalHandler.curGoal.totalDistance;
+    } catch (e) {
+      return 1;
+    }
+    return result;
+  }
+
   Widget getProgressBar() {
     return Stack(
       children: [
         LinearPercentIndicator(
           padding: const EdgeInsets.all(0),
           lineHeight: 30.0,
-          percent: goalHandler.curGoal.evalFinished()
-              ? 1.0
-              : goalHandler.curGoal.curDistance /
-                  goalHandler.curGoal.totalDistance,
+          percent:
+              goalHandler.curGoal.evalFinished() ? 1.0 : calculateProgress(),
           backgroundColor: Theme.of(context).colorScheme.surface,
           progressColor: Colors.transparent,
           animation: true,
@@ -204,7 +217,7 @@ class _GoalListViewState extends State<GoalListView> {
             padding: const EdgeInsets.only(top: 4),
             alignment: Alignment.center,
             child: Text(
-              '${(goalHandler.curGoal.curDistance / goalHandler.curGoal.totalDistance * 100).toStringAsFixed(2)}%',
+              '${(calculateProgress() * 100).toStringAsFixed(2)}%',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
@@ -216,30 +229,38 @@ class _GoalListViewState extends State<GoalListView> {
   }
 
   Widget _buildEmptyView(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        getDropDownRow(context),
-        // Text(
-        //   AppLocalizations.of(context)!.emptyText,
-        //   style: const TextStyle(fontSize: 18.0),
-        // ),
-        // const SizedBox(height: 20),
-        // Row(
-        //   mainAxisAlignment: MainAxisAlignment.center,
-        //   children: [
-        //     FloatingActionButton(
-        //       onPressed: () => showGoalDialog(context, null),
-        //       heroTag: 'addButton',
-        //       backgroundColor: Theme.of(context).colorScheme.secondary,
-        //       child: Icon(
-        //         Icons.add,
-        //         color: Theme.of(context).colorScheme.onSecondary,
-        //       ),
-        //     ),
-        //   ],
-        // ),
-      ],
+    goalHandler.goallist = goalHandler
+        .goallist; // seems like i need this so it reacts on the change later and shows the first goal;
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Card(
+        shape: RoundedRectangleBorder(
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+            width: 2.0,
+          ),
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        elevation: 5,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              getDropDownRow(context),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.7),
+              Container(
+                  width: double.infinity,
+                  color: Theme.of(context).colorScheme.tertiary,
+                  child: Text(
+                    "0 / 0 ${widget.controller.distanceUnit.short}",
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  )),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -266,7 +287,7 @@ class _GoalListViewState extends State<GoalListView> {
                 mapUtils.getMap(
                   LatLng(goalHandler.curGoal.latStart,
                       goalHandler.curGoal.longStart),
-                  MediaQuery.of(context).platformBrightness == Brightness.dark,
+                  Theme.of(context).brightness == Brightness.dark,
                 ),
                 Padding(
                   padding: const EdgeInsets.all(0),
@@ -508,23 +529,7 @@ class _GoalListViewState extends State<GoalListView> {
                                         ),
                                   ),
                                 ],
-                              )
-                                  // padding: const EdgeInsets.all(15),
-                                  // width: double.infinity,
-                                  // Center(
-                                  //   child: Text(
-                                  //     "${formatNumber(calculatedDistance)} ${widget.controller.distanceUnit.short}",
-                                  //     style: Theme.of(context)
-                                  //         .textTheme
-                                  //         .titleLarge
-                                  //         ?.copyWith(
-                                  //           color: Theme.of(context)
-                                  //               .colorScheme
-                                  //               .tertiary,
-                                  //         ),
-                                  //   ),
-                                  // ),
-                                  ),
+                              )),
                             ],
                           )))),
               actions: [
@@ -882,6 +887,7 @@ class _GoalListViewState extends State<GoalListView> {
             SizedBox(
                 width: MediaQuery.of(context).size.width * 0.60,
                 child: DropdownButton(
+                  hint: Text(AppLocalizations.of(context)!.emptyText),
                   underline: Container(),
                   isExpanded: true,
                   value: goalHandler.goallist.isNotEmpty
@@ -936,11 +942,11 @@ class _GoalListViewState extends State<GoalListView> {
 }
 
 /// 1.0:
-/// Overall:
-/// - have a text field style
-/// - final colors
-///
-/// have empty drowdown and + buttons instead of FAB
 /// 
-/// Bug 0 distance
-/// make dropdown row pretty empty view
+/// Bug 0 distance -> validate that distance is bigger 0
+/// final name
+/// 
+/// issues
+/// erstes picker map loaden ist laaahm
+/// beim theme change flackert die umrandung der map card nochmal auf
+/// bei theme wechsel lädt er die map nicht neu bis zum nächsten öffnen
