@@ -34,7 +34,7 @@
 
 | Light Theme | Dark Theme |
 |-------------|------------|
-| ![Light Theme](images/screenshot-light.png) | ![Dark Theme](images/screenshot-dark.png) |
+| <img src="images/screenshot-light.png" alt="Description" width="250">  | <img src="images/screenshot-dark.png" alt="Description" width="250"> |
 
 ## Installation  
 
