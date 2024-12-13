@@ -44,11 +44,6 @@ class SettingsController with ChangeNotifier {
   }
 
   Future<void> updateDistanceUnit(DistanceUnit? newDistanceUnit) async {
-    // if (newDistanceUnit == _distanceUnit) return;
-
-    // _distanceUnit = newDistanceUnit ?? DistanceUnit.kilometers;
-    // notifyListeners();
-    // await _settingsService.updateDistanceUnit(newDistanceUnit!);
     if (newDistanceUnit == _distanceUnit) return;
     _distanceUnit = newDistanceUnit!;
     notifyListeners();
